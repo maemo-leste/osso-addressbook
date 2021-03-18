@@ -708,6 +708,26 @@ window_realize_cb(GtkWidget *widget, gpointer user_data)
   }
 }
 
+static gboolean
+widget_hide_idle_cb(GtkWidget *widget)
+{
+  gtk_widget_hide(widget);
+  return FALSE;
+}
+
+static void
+contact_view_contact_activated_cb(OssoABookContactView *view,
+                                  OssoABookContact *master_contact,
+                                  osso_abook_data *user_data)
+{
+  if (user_data->stacked_group)
+    g_idle_add((GSourceFunc)widget_hide_idle_cb, user_data->field_44);
+
+  g_idle_add((GSourceFunc)widget_hide_idle_cb, user_data->live_search);
+  create_menu(user_data, main_menu_actions[8], MENU_ACTIONS_COUNT,
+              master_contact);
+}
+
 static void
 sim_group_available_cb(OssoABookSimGroup *sim_group, osso_abook_data *data)
 {

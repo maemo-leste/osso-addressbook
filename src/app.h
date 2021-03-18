@@ -52,7 +52,7 @@ typedef struct
   GtkWidget *live_search;
   int gap3C;
   int field_40;
-  int field_44;
+  GtkWidget *field_44;
   gboolean dialog_open;
   osso_context_t *osso;
   gchar *arg1;
