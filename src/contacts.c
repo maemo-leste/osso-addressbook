@@ -160,8 +160,7 @@ create_communication_history_query(OssoABookContact *contact, RTComEl *rtcomel)
           goto fail;
       }
     }
-    /* g_warn_message(0, "actions.c", 328, "create_communication_history_query", 0); */
-    g_debug("%s: %s", G_STRLOC, G_STRFUNC);
+    g_warn_if_reached();
     goto fail;
   }
 
