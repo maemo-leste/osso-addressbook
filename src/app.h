@@ -93,4 +93,6 @@ void app_destroy(osso_abook_data *data);
 void app_exit_main_loop(osso_abook_data *data);
 void app_show(osso_abook_data *data);
 
+void select_contact_row(osso_abook_data *data, GtkTreePath *path);
+
 #endif /* APP_H */

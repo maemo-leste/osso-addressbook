@@ -250,7 +250,7 @@ model_rows_reorder_idle(osso_abook_data *data)
   }
 }
 
-static void
+void
 select_contact_row(osso_abook_data *data, GtkTreePath *path)
 {
   GtkTreeView *view = osso_abook_tree_view_get_tree_view(
@@ -724,7 +724,7 @@ contact_view_contact_activated_cb(OssoABookContactView *view,
     g_idle_add((GSourceFunc)widget_hide_idle_cb, user_data->field_44);
 
   g_idle_add((GSourceFunc)widget_hide_idle_cb, user_data->live_search);
-  create_menu(user_data, main_menu_actions[8], MENU_ACTIONS_COUNT,
+  create_menu(user_data, contact_menu_actions[8], CONTACT_MENU_COUNT,
               master_contact);
 }
 
