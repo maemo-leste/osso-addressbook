@@ -724,8 +724,8 @@ contact_view_contact_activated_cb(OssoABookContactView *view,
     g_idle_add((GSourceFunc)widget_hide_idle_cb, user_data->field_44);
 
   g_idle_add((GSourceFunc)widget_hide_idle_cb, user_data->live_search);
-  create_menu(user_data, contact_menu_actions[8], CONTACT_MENU_COUNT,
-              master_contact);
+  create_menu(user_data, contact_menu_actions[8],
+              G_N_ELEMENTS(contact_menu_actions), master_contact);
 }
 
 static void
