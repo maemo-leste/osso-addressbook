@@ -84,6 +84,15 @@ typedef struct
   int field_B8;
 } osso_abook_data;
 
+typedef struct
+{
+  GtkWidget *live_search;
+  OssoABookTreeView *tree_view;
+  GtkTreeRowReference *row_ref;
+  float field_C;
+  int field_10;
+} live_search_data;
+
 #define STARTUP_PROGRESS_SEPARATOR "====================================================================="
 
 gboolean app_create(osso_context_t *osso, const gchar *arg1,

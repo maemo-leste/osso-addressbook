@@ -22,6 +22,7 @@
 #include <libosso-abook/osso-abook-contact-view.h>
 #include <libosso-abook/osso-abook-debug.h>
 #include <libosso-abook/osso-abook-row-model.h>
+#include <libosso-abook/osso-abook-util.h>
 
 #include <libintl.h>
 #include <string.h>
@@ -772,6 +773,137 @@ sim_group_ready_cb(OssoABookWaitable *waitable, const GError *error,
   OSSO_ABOOK_NOTE(EDS, "SIM group ready (all SIM books available)");
 }
 
+static void
+live_search_data_free(live_search_data *data)
+{
+  if (data->field_10)
+    g_source_remove(data->field_10);
+
+  g_signal_handlers_disconnect_by_data(data->live_search, data);
+  g_signal_handlers_disconnect_by_data(data->tree_view, data);
+
+  if (data->row_ref)
+    gtk_tree_row_reference_free(data->row_ref);
+
+  g_free(data);
+}
+
+static void
+row_tapped_cb(GtkTreeView *tree_view, GtkTreePath *treepath,
+              live_search_data *data)
+{
+  GtkTreeModel *model;
+  GdkRectangle visible_rect, rect;
+  float rect_h, rect_y;
+
+  if (data->row_ref)
+  {
+    gtk_tree_row_reference_free(data->row_ref);
+    data->row_ref = NULL;
+  }
+
+  model = gtk_tree_view_get_model(tree_view);
+  data->row_ref = gtk_tree_row_reference_new(model, treepath);
+  gtk_tree_view_get_visible_rect(tree_view, &visible_rect);
+  gtk_tree_view_get_background_area(tree_view, treepath, NULL, &rect);
+
+  if (gtk_widget_get_mapped(data->live_search))
+    visible_rect.height += data->live_search->allocation.height;
+
+  rect_h = visible_rect.height - rect.height;
+
+  if (rect_h <= 0.0)
+    rect_y = 0.0;
+  else
+    rect_y = rect.y;
+
+  if (rect_h > 0.0)
+    rect_y = rect_y / rect_h;
+
+  data->field_C = rect_y;
+}
+
+
+static int
+live_search_scroll(live_search_data *data)
+{
+  GtkTreeView *tv;
+  GtkTreePath *treepath;
+
+  data->field_10 = 0;
+  tv = osso_abook_tree_view_get_tree_view(data->tree_view);
+  g_signal_handlers_disconnect_matched(tv,
+                                       G_SIGNAL_MATCH_DATA|G_SIGNAL_MATCH_FUNC,
+                                       0, 0, NULL, row_tapped_cb, data);
+
+  if (data->row_ref)
+  {
+    treepath = gtk_tree_row_reference_get_path(data->row_ref);
+    if (treepath)
+    {
+      tv = osso_abook_tree_view_get_tree_view(data->tree_view);
+      gtk_tree_view_scroll_to_cell(tv, treepath, 0, 1, data->field_C, 0.0);
+      gtk_tree_path_free(treepath);
+    }
+  }
+
+  return 0;
+}
+
+static gulong
+live_search_show_cb(int unused, live_search_data *data)
+{
+  GtkTreeView *tv;
+
+  if (data->row_ref)
+  {
+    gtk_tree_row_reference_free(data->row_ref);
+    data->row_ref = NULL;
+  }
+  tv = osso_abook_tree_view_get_tree_view(data->tree_view);
+  return g_signal_connect_data(tv, "hildon-row-tapped",
+                               G_CALLBACK(row_tapped_cb),
+                               data, NULL, 0);
+}
+
+static void
+live_search_hide_cb(int unused, live_search_data *data)
+{
+  if (!data->field_10)
+    data->field_10 = g_idle_add((GSourceFunc)live_search_scroll, data);
+}
+
+static GtkWidget *
+setup_live_search(HildonWindow *parent, OssoABookTreeView *tree_view)
+{
+  OssoABookFilterModel *filter_model;
+  live_search_data *data;
+
+  filter_model = osso_abook_tree_view_get_filter_model(tree_view);
+  data = g_malloc0(sizeof(live_search_data));
+  data->tree_view = tree_view;
+  data->live_search = osso_abook_live_search_new_with_filter(filter_model);
+  hildon_window_add_toolbar(parent, GTK_TOOLBAR(data->live_search));
+  hildon_live_search_widget_hook(HILDON_LIVE_SEARCH(data->live_search),
+                                 GTK_WIDGET(parent),
+                                 GTK_WIDGET(osso_abook_tree_view_get_tree_view(
+                                            tree_view)));
+
+  g_signal_connect_data(data->live_search, "show",
+                        G_CALLBACK(live_search_show_cb),
+                        data,
+                        (GClosureNotify)live_search_data_free,
+                        0);
+
+  g_signal_connect_data(data->live_search, "hide",
+                        G_CALLBACK(live_search_hide_cb),
+                        data,
+                        NULL,
+                        G_CONNECT_AFTER);
+
+  return data->live_search;
+}
+
 gboolean
 app_create(osso_context_t *osso, const gchar *arg1, osso_abook_data *data)
 {
@@ -893,7 +1025,7 @@ app_create(osso_context_t *osso, const gchar *arg1, osso_abook_data *data)
   gtk_widget_grab_focus(GTK_WIDGET(data->contact_view));
 
   data->live_search =
-      _setup_live_search(HILDON_WINDOW(data->window),
+      setup_live_search(HILDON_WINDOW(data->window),
                          OSSO_ABOOK_TREE_VIEW(data->contact_view));
   tree_view = osso_abook_tree_view_get_tree_view(
         OSSO_ABOOK_TREE_VIEW(data->contact_view));
