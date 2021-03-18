@@ -67,7 +67,7 @@ osso_abook_get_your_contacts_dialog_already_shown()
 
 /* TODO: Move what's necessary to actions.c */
 
-static void
+void
 merge(osso_abook_data *data, const char *uid)
 {
   OssoABookTreeView *contact_view;

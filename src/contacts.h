@@ -28,6 +28,7 @@ extern OssoABookMenuEntry contact_menu_actions[CONTACT_MENU_COUNT];
 
 void set_contacts_mode(osso_abook_data *data, int mode);
 void scroll_to_top_if_needed(osso_abook_data *data);
+void merge(osso_abook_data *data, const char *uid);
 
 typedef struct _OssoABookGetYourContactsDialog OssoABookGetYourContactsDialog;
 typedef struct _OssoABookGetYourContactsDialogClass OssoABookGetYourContactsDialogClass;

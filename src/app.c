@@ -23,6 +23,8 @@
 #include <libosso-abook/osso-abook-debug.h>
 #include <libosso-abook/osso-abook-row-model.h>
 #include <libosso-abook/osso-abook-util.h>
+#include <libosso-abook/osso-abook-contact.h>
+#include <libosso-abook/osso-abook-enums.h>
 
 #include <libintl.h>
 #include <string.h>
@@ -717,6 +719,135 @@ widget_hide_idle_cb(GtkWidget *widget)
 }
 
 static void
+stackable_window_destroy_cb(int unused, osso_abook_data *data)
+{
+  if (data->stackable_window != NULL)
+    data->stackable_window = NULL;
+}
+
+static void
+action_started_cb(OssoABookTouchContactStarter *starter, osso_abook_data *data)
+{
+  OssoABookContactAction action;
+  const char *action_name;
+
+  action = osso_abook_touch_contact_starter_get_started_action(starter);
+
+  action_name = osso_abook_contact_action_get_name(action);
+  OSSO_ABOOK_NOTE(OSSO_ABOOK_DEBUG_GENERIC,
+                  "TouchContactStarter::action-started for %s", action_name);
+
+  if (action == OSSO_ABOOK_CONTACT_ACTION_CREATE_ACCOUNT)
+    return;
+
+  if (data->stackable_window)
+  {
+    gtk_widget_destroy(data->stackable_window);
+    data->stackable_window = NULL;
+  }
+}
+
+static gboolean
+merge_cb0(int unused, const char *uid, osso_abook_data *data)
+{
+  merge(data, uid);
+  return TRUE;
+}
+
+static void
+contact_deleted_cb(int unused, osso_abook_data *data)
+{
+  if (data->stackable_window)
+  {
+    gtk_widget_destroy(data->stackable_window);
+    data->stackable_window = NULL;
+  }
+}
+
+static void
+editor_started_cb(int unused, gpointer instance, gpointer data)
+{
+  g_signal_connect_data(instance, "contact-saved",
+                        G_CALLBACK(merge_cb0), data, NULL, G_CONNECT_AFTER);
+  g_signal_connect_data(instance, "contact-deleted",
+                        G_CALLBACK(contact_deleted_cb), data, NULL, 0);
+}
+
+static void
+create_menu(osso_abook_data *data, OssoABookMenuEntry *entries,
+            int entries_count, OssoABookContact *contact)
+{
+  HildonAppMenu *menu;
+  GtkWidget *alignment, *contact_starter;
+  void (*map_cb)(void);
+  GtkAccelGroup *accel_group;
+
+  if (data->stackable_window)
+    return;
+
+  data->stackable_window = hildon_stackable_window_new();
+  accel_group = gtk_accel_group_new();
+  gtk_window_set_transient_for(GTK_WINDOW(data->stackable_window),
+                               GTK_WINDOW(data->window));
+  gtk_window_add_accel_group(GTK_WINDOW(data->window), accel_group);
+
+  g_signal_connect_data(data->stackable_window,
+                        "destroy",
+                        G_CALLBACK(stackable_window_destroy_cb),
+                        data, NULL, 0);
+
+  menu = app_menu_from_menu_entries(accel_group,
+                                    entries, entries_count,
+                                    0, 0, data, 0);
+
+  append_menu_extension_entries(menu,
+                                "osso-abook-contact-view",
+                                GTK_WINDOW(data->stackable_window),
+                                contact, data);
+
+  if (entries == contact_menu_actions)
+    map_cb = (void (*)(void))history_query;
+  else
+    map_cb = (void (*)(void))toggle_menu;
+
+  g_signal_connect_data(menu, "map", map_cb, data, NULL, 0);
+
+  if (entries == sim_bt_menu_actions)
+    return;
+
+  hildon_window_set_app_menu(HILDON_WINDOW(data->stackable_window), menu);
+  g_object_unref(accel_group);
+  alignment = gtk_alignment_new(0.0, 0.0, 1.0, 1.0);
+  gtk_alignment_set_padding(GTK_ALIGNMENT(alignment), 0, 0, 16u, 16u);
+  gtk_container_add(GTK_CONTAINER(data->stackable_window), alignment);
+  gtk_widget_show(alignment);
+
+  app_menu_set_disable_on_lowmem(menu, "edit-contact-button", 1);
+
+  if (hw_is_lowmem_mode())
+    contact_starter = osso_abook_touch_contact_starter_new_with_contact(
+                          GTK_WINDOW(data->stackable_window), contact);
+  else
+    contact_starter = osso_abook_touch_contact_starter_new_with_editor(
+                          GTK_WINDOW(data->stackable_window), contact);
+
+  g_signal_connect_data(contact_starter, "action-started",
+                        G_CALLBACK(action_started_cb),
+                        data, NULL, 0);
+
+  g_signal_connect_data(contact_starter, "editor-started",
+                        G_CALLBACK(editor_started_cb),
+                       data, NULL, 0);
+
+  g_object_set_data(G_OBJECT(data->stackable_window), "starter",
+                    contact_starter);
+
+  gtk_container_add(GTK_CONTAINER(alignment), contact_starter);
+  gtk_widget_show(contact_starter);
+  gtk_widget_show(data->stackable_window);
+}
+
+static void
 contact_view_contact_activated_cb(OssoABookContactView *view,
                                   OssoABookContact *master_contact,
                                   osso_abook_data *user_data)
@@ -725,7 +856,7 @@ contact_view_contact_activated_cb(OssoABookContactView *view,
     g_idle_add((GSourceFunc)widget_hide_idle_cb, user_data->field_44);
 
   g_idle_add((GSourceFunc)widget_hide_idle_cb, user_data->live_search);
-  create_menu(user_data, contact_menu_actions[8],
+  create_menu(user_data, contact_menu_actions,
               G_N_ELEMENTS(contact_menu_actions), master_contact);
 }
 
