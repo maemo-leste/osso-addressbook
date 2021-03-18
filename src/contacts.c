@@ -348,8 +348,7 @@ contact_communication_history_cb(int unused, osso_abook_data *data)
   gtk_window_set_title(GTK_WINDOW(dialog),
                        dgettext(NULL, "addr_me_communication_history"));
 
-  /* TODO: review */
-  gtk_box_pack_start(GTK_BOX(dialog), pan, 1, 1, 0);
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), pan, 1, 1, 0);
   if (data->stackable_window)
   {
     if (GTK_IS_WINDOW(data->stackable_window))
