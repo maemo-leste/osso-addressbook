@@ -719,10 +719,10 @@ widget_hide_idle_cb(GtkWidget *widget)
 }
 
 static void
-stackable_window_destroy_cb(int unused, osso_abook_data *data)
+starter_window_destroy_cb(int unused, osso_abook_data *data)
 {
-  if (data->stackable_window != NULL)
-    data->stackable_window = NULL;
+  if (data->starter_window != NULL)
+    data->starter_window = NULL;
 }
 
 static void
@@ -740,10 +740,10 @@ action_started_cb(OssoABookTouchContactStarter *starter, osso_abook_data *data)
   if (action == OSSO_ABOOK_CONTACT_ACTION_CREATE_ACCOUNT)
     return;
 
-  if (data->stackable_window)
+  if (data->starter_window)
   {
-    gtk_widget_destroy(data->stackable_window);
-    data->stackable_window = NULL;
+    gtk_widget_destroy(data->starter_window);
+    data->starter_window = NULL;
   }
 }
 
@@ -757,10 +757,10 @@ merge_cb0(int unused, const char *uid, osso_abook_data *data)
 static void
 contact_deleted_cb(int unused, osso_abook_data *data)
 {
-  if (data->stackable_window)
+  if (data->starter_window)
   {
-    gtk_widget_destroy(data->stackable_window);
-    data->stackable_window = NULL;
+    gtk_widget_destroy(data->starter_window);
+    data->starter_window = NULL;
   }
 }
 
@@ -782,17 +782,17 @@ create_menu(osso_abook_data *data, OssoABookMenuEntry *entries,
   void (*map_cb)(void);
   GtkAccelGroup *accel_group;
 
-  if (data->stackable_window)
+  if (data->starter_window)
     return;
 
-  data->stackable_window = hildon_stackable_window_new();
+  data->starter_window = hildon_stackable_window_new();
   accel_group = gtk_accel_group_new();
-  gtk_window_set_transient_for(GTK_WINDOW(data->stackable_window),
+  gtk_window_set_transient_for(GTK_WINDOW(data->starter_window),
                                GTK_WINDOW(data->window));
   gtk_window_add_accel_group(GTK_WINDOW(data->window), accel_group);
 
-  g_signal_connect(data->stackable_window, "destroy",
-                   G_CALLBACK(stackable_window_destroy_cb), data);
+  g_signal_connect(data->starter_window, "destroy",
+                   G_CALLBACK(starter_window_destroy_cb), data);
 
   menu = app_menu_from_menu_entries(accel_group,
                                     entries, entries_count,
@@ -800,7 +800,7 @@ create_menu(osso_abook_data *data, OssoABookMenuEntry *entries,
 
   append_menu_extension_entries(menu,
                                 "osso-abook-contact-view",
-                                GTK_WINDOW(data->stackable_window),
+                                GTK_WINDOW(data->starter_window),
                                 contact, data);
 
   if (entries == contact_menu_actions)
@@ -813,33 +813,33 @@ create_menu(osso_abook_data *data, OssoABookMenuEntry *entries,
   if (entries == sim_bt_menu_actions)
     return;
 
-  hildon_window_set_app_menu(HILDON_WINDOW(data->stackable_window), menu);
+  hildon_window_set_app_menu(HILDON_WINDOW(data->starter_window), menu);
   g_object_unref(accel_group);
   alignment = gtk_alignment_new(0.0, 0.0, 1.0, 1.0);
   gtk_alignment_set_padding(GTK_ALIGNMENT(alignment), 0, 0, 16u, 16u);
-  gtk_container_add(GTK_CONTAINER(data->stackable_window), alignment);
+  gtk_container_add(GTK_CONTAINER(data->starter_window), alignment);
   gtk_widget_show(alignment);
 
   app_menu_set_disable_on_lowmem(menu, "edit-contact-button", TRUE);
 
   if (hw_is_lowmem_mode())
     contact_starter = osso_abook_touch_contact_starter_new_with_contact(
-                          GTK_WINDOW(data->stackable_window), contact);
+                          GTK_WINDOW(data->starter_window), contact);
   else
     contact_starter = osso_abook_touch_contact_starter_new_with_editor(
-                          GTK_WINDOW(data->stackable_window), contact);
+                          GTK_WINDOW(data->starter_window), contact);
 
   g_signal_connect(contact_starter, "action-started",
                    G_CALLBACK(action_started_cb), data);
   g_signal_connect(contact_starter, "editor-started",
                    G_CALLBACK(editor_started_cb), data);
 
-  g_object_set_data(G_OBJECT(data->stackable_window), "starter",
+  g_object_set_data(G_OBJECT(data->starter_window), "starter",
                     contact_starter);
 
   gtk_container_add(GTK_CONTAINER(alignment), contact_starter);
   gtk_widget_show(contact_starter);
-  gtk_widget_show(data->stackable_window);
+  gtk_widget_show(data->starter_window);
 }
 
 static void

@@ -106,10 +106,10 @@ get_starter_contact(osso_abook_data *data)
 {
   OssoABookTouchContactStarter *starter;
 
-  if (!data->stackable_window)
+  if (!data->starter_window)
     return NULL;
 
-  starter = g_object_get_data(G_OBJECT(data->stackable_window), "starter");
+  starter = g_object_get_data(G_OBJECT(data->starter_window), "starter");
   if (!starter)
     return NULL;
 
@@ -179,7 +179,7 @@ contact_starter_edit_cb(int unused, osso_abook_data *data)
 {
   OssoABookTouchContactStarter *starter;
 
-  starter = g_object_get_data(G_OBJECT(data->stackable_window), "starter");
+  starter = g_object_get_data(G_OBJECT(data->starter_window), "starter");
   osso_abook_touch_contact_starter_start_editor(
       OSSO_ABOOK_TOUCH_CONTACT_STARTER(starter));
 }
@@ -190,12 +190,12 @@ contact_send_card_cb(int unused, osso_abook_data *data)
   OssoABookContact *contact;
   GtkWidget *dialog;
 
-  if (osso_abook_check_disc_space(GTK_WINDOW(data->stackable_window)))
+  if (osso_abook_check_disc_space(GTK_WINDOW(data->starter_window)))
   {
     contact = get_starter_contact(data);
     /* TODO: Missing func in libosso-abook */
     dialog = osso_abook_send_contacts_dialog_new(
-                 GTK_WINDOW(data->stackable_window), contact, FALSE);
+                 GTK_WINDOW(data->starter_window), contact, FALSE);
     run_dialog(data, GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
   }
@@ -205,7 +205,7 @@ static void
 contact_send_detail_cb(int unused, osso_abook_data *data)
 {
   OssoABookContact *contact;
-  GtkWindow *window = GTK_WINDOW(data->stackable_window);
+  GtkWindow *window = GTK_WINDOW(data->starter_window);
 
   if (osso_abook_check_disc_space(window))
   {
@@ -221,7 +221,7 @@ contact_merge_cb(int unused, osso_abook_data *data)
   gpointer s;
   OssoABookTouchContactStarter *starter;
 
-  s = g_object_get_data(G_OBJECT(data->stackable_window), "starter");
+  s = g_object_get_data(G_OBJECT(data->starter_window), "starter");
   starter = OSSO_ABOOK_TOUCH_CONTACT_STARTER(s);
   osso_abook_touch_contact_starter_start_merge(starter, data->contact_model,
                                                merge_cb, data);
@@ -233,7 +233,7 @@ contact_starter_delete_cb(int unused, osso_abook_data *data)
   OssoABookContact *contact;
 
   g_return_if_fail(data->aggregator);
-  g_return_if_fail(data->stackable_window); /* TODO: Was named starter_window */
+  g_return_if_fail(data->starter_window);
 
   contact = get_starter_contact(data);
 
@@ -244,11 +244,11 @@ contact_starter_delete_cb(int unused, osso_abook_data *data)
   }
 
   /* TODO: Missing func in libosso-abook */
-  if (osso_abook_delete_contact_dialog_run(GTK_WINDOW(data->stackable_window),
+  if (osso_abook_delete_contact_dialog_run(GTK_WINDOW(data->starter_window),
                                            data->aggregator, contact))
   {
-    gtk_widget_destroy(data->stackable_window);
-    data->stackable_window = NULL;
+    gtk_widget_destroy(data->starter_window);
+    data->starter_window = NULL;
   }
 }
 
@@ -264,7 +264,7 @@ contact_create_shortcut_cb(int unused, osso_abook_data *data)
   }
 
   if (osso_abook_contact_shortcut_create(contact))
-    hildon_banner_show_information(data->stackable_window, 0,
+    hildon_banner_show_information(data->starter_window, 0,
         dgettext(NULL, "addr_ib_shortcut_created"));
 }
 
@@ -292,7 +292,7 @@ contact_request_authorization_cb(int unused, osso_abook_data *data)
     {
       contact = contact_list->data;
       osso_abook_contact_accept(contact, master_contact,
-                                GTK_WINDOW(data->stackable_window));
+                                GTK_WINDOW(data->starter_window));
       contact_list = contact_list->next;
     }
     while (contact_list);
@@ -300,7 +300,7 @@ contact_request_authorization_cb(int unused, osso_abook_data *data)
   display_name = osso_abook_contact_get_display_name(master_contact);
   info = g_strdup_printf(dgettext(NULL, "addr_ib_request_author_resend"),
                          display_name);
-  hildon_banner_show_information(data->stackable_window, 0, info);
+  hildon_banner_show_information(data->starter_window, 0, info);
   g_free(info);
 }
 
@@ -348,11 +348,11 @@ contact_communication_history_cb(int unused, osso_abook_data *data)
                        dgettext(NULL, "addr_me_communication_history"));
 
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), pan, 1, 1, 0);
-  if (data->stackable_window)
+  if (data->starter_window)
   {
-    if (GTK_IS_WINDOW(data->stackable_window))
+    if (GTK_IS_WINDOW(data->starter_window))
       gtk_window_set_transient_for(GTK_WINDOW(dialog),
-                                   GTK_WINDOW(data->stackable_window));
+                                   GTK_WINDOW(data->starter_window));
   }
   gtk_widget_show_all(dialog);
   g_object_unref(rtcom_model);

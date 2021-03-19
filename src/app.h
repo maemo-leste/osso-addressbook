@@ -61,7 +61,7 @@ typedef struct
   gulong sequence_complete_id;
   int gap60;
   int field_64;
-  GtkWidget *stackable_window;
+  GtkWidget *starter_window;
   GtkWidget *stacked_group;
   int field_70;
   int field_74;
