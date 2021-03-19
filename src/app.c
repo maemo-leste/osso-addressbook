@@ -767,10 +767,10 @@ contact_deleted_cb(int unused, osso_abook_data *data)
 static void
 editor_started_cb(int unused, gpointer instance, gpointer data)
 {
-  g_signal_connect_data(instance, "contact-saved",
-                        G_CALLBACK(merge_cb0), data, NULL, G_CONNECT_AFTER);
-  g_signal_connect_data(instance, "contact-deleted",
-                        G_CALLBACK(contact_deleted_cb), data, NULL, 0);
+  g_signal_connect_after(instance, "contact-saved",
+                         G_CALLBACK(merge_cb0), data);
+  g_signal_connect(instance, "contact-deleted",
+                   G_CALLBACK(contact_deleted_cb), data);
 }
 
 static void
@@ -791,10 +791,8 @@ create_menu(osso_abook_data *data, OssoABookMenuEntry *entries,
                                GTK_WINDOW(data->window));
   gtk_window_add_accel_group(GTK_WINDOW(data->window), accel_group);
 
-  g_signal_connect_data(data->stackable_window,
-                        "destroy",
-                        G_CALLBACK(stackable_window_destroy_cb),
-                        data, NULL, 0);
+  g_signal_connect(data->stackable_window, "destroy",
+                   G_CALLBACK(stackable_window_destroy_cb), data);
 
   menu = app_menu_from_menu_entries(accel_group,
                                     entries, entries_count,
@@ -810,7 +808,7 @@ create_menu(osso_abook_data *data, OssoABookMenuEntry *entries,
   else
     map_cb = (void (*)(void))toggle_menu;
 
-  g_signal_connect_data(menu, "map", map_cb, data, NULL, 0);
+  g_signal_connect(menu, "map", map_cb, data);
 
   if (entries == sim_bt_menu_actions)
     return;
@@ -822,7 +820,7 @@ create_menu(osso_abook_data *data, OssoABookMenuEntry *entries,
   gtk_container_add(GTK_CONTAINER(data->stackable_window), alignment);
   gtk_widget_show(alignment);
 
-  app_menu_set_disable_on_lowmem(menu, "edit-contact-button", 1);
+  app_menu_set_disable_on_lowmem(menu, "edit-contact-button", TRUE);
 
   if (hw_is_lowmem_mode())
     contact_starter = osso_abook_touch_contact_starter_new_with_contact(
@@ -831,13 +829,10 @@ create_menu(osso_abook_data *data, OssoABookMenuEntry *entries,
     contact_starter = osso_abook_touch_contact_starter_new_with_editor(
                           GTK_WINDOW(data->stackable_window), contact);
 
-  g_signal_connect_data(contact_starter, "action-started",
-                        G_CALLBACK(action_started_cb),
-                        data, NULL, 0);
-
-  g_signal_connect_data(contact_starter, "editor-started",
-                        G_CALLBACK(editor_started_cb),
-                       data, NULL, 0);
+  g_signal_connect(contact_starter, "action-started",
+                   G_CALLBACK(action_started_cb), data);
+  g_signal_connect(contact_starter, "editor-started",
+                   G_CALLBACK(editor_started_cb), data);
 
   g_object_set_data(G_OBJECT(data->stackable_window), "starter",
                     contact_starter);
@@ -984,17 +979,16 @@ live_search_scroll(live_search_data *data)
 static gulong
 live_search_show_cb(int unused, live_search_data *data)
 {
-  GtkTreeView *tv;
-
   if (data->row_ref)
   {
     gtk_tree_row_reference_free(data->row_ref);
     data->row_ref = NULL;
   }
-  tv = osso_abook_tree_view_get_tree_view(data->tree_view);
-  return g_signal_connect_data(tv, "hildon-row-tapped",
-                               G_CALLBACK(row_tapped_cb),
-                               data, NULL, 0);
+
+  return g_signal_connect(osso_abook_tree_view_get_tree_view(data->tree_view),
+                          "hildon-row-tapped",
+                          G_CALLBACK(row_tapped_cb),
+                          data);
 }
 
 static void
@@ -1026,11 +1020,8 @@ setup_live_search(HildonWindow *parent, OssoABookTreeView *tree_view)
                         (GClosureNotify)live_search_data_free,
                         0);
 
-  g_signal_connect_data(data->live_search, "hide",
-                        G_CALLBACK(live_search_hide_cb),
-                        data,
-                        NULL,
-                        G_CONNECT_AFTER);
+  g_signal_connect_after(data->live_search, "hide",
+                         G_CALLBACK(live_search_hide_cb), data);
 
   return data->live_search;
 }
