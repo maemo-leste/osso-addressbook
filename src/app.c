@@ -31,6 +31,7 @@
 #include <string.h>
 
 #include "app.h"
+#include "actions.h"
 #include "service.h"
 #include "groups.h"
 #include "contacts.h"

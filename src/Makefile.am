@@ -9,4 +9,5 @@ osso_addressbook_SOURCES = \
 			contacts.c \
 			menu.c \
 			app.c \
+			actions.c \
 			main.c
