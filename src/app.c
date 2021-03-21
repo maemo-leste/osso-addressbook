@@ -18,12 +18,13 @@
 
 #include <libosso-abook/osso-abook-service-group.h>
 #include <libosso-abook/osso-abook-waitable.h>
+#include <libosso-abook/osso-abook-contact.h>
 #include <libosso-abook/osso-abook-gconf-contact.h>
+#include <libosso-abook/osso-abook-voicemail-contact.h>
 #include <libosso-abook/osso-abook-contact-view.h>
 #include <libosso-abook/osso-abook-debug.h>
 #include <libosso-abook/osso-abook-row-model.h>
 #include <libosso-abook/osso-abook-util.h>
-#include <libosso-abook/osso-abook-contact.h>
 #include <libosso-abook/osso-abook-enums.h>
 
 #include <libintl.h>
@@ -771,6 +772,155 @@ editor_started_cb(int unused, gpointer instance, gpointer data)
                          G_CALLBACK(merge_cb0), data);
   g_signal_connect(instance, "contact-deleted",
                    G_CALLBACK(contact_deleted_cb), data);
+}
+
+static void
+gobj_set_visible(GObject *obj, const gchar *key, gboolean state)
+{
+  gpointer data = g_object_get_data(G_OBJECT(obj), key);
+  if (data)
+    g_object_set(data, "visible", state, NULL);
+}
+
+static gboolean
+should_auth_request(OssoABookContact *master_contact)
+{
+  const char *st_pen, *st_no;
+  char *contact_val;
+  GList *contact_list;
+  OssoABookContact *contact;
+  gboolean ret;
+
+  st_pen = osso_abook_presence_state_get_nick(
+      OSSO_ABOOK_PRESENCE_STATE_REMOTE_PENDING);
+
+  st_no = osso_abook_presence_state_get_nick(
+      OSSO_ABOOK_PRESENCE_STATE_NO);
+
+  if (osso_abook_contact_is_roster_contact(master_contact))
+  {
+    contact_val = osso_abook_contact_get_value(E_CONTACT(master_contact),
+                                               "X-TELEPATHY-SUBSCRIBED");
+    if (!contact_val)
+      ret = FALSE;
+    else
+    {
+      ret = g_str_equal(contact_val, st_pen) || g_str_equal(contact_val, st_no);
+      g_debug("Show authorization request? %d (%s)", ret, contact_val);
+      g_free(contact_val);
+    }
+  }
+  else
+  {
+    contact_list = osso_abook_contact_get_roster_contacts(master_contact);
+
+    if (contact_list && (contact = contact_list->data) != 0)
+    {
+      while ( !should_auth_request(contact) )
+      {
+        contact_list = contact_list->next;
+
+        if (contact_list)
+        {
+          contact = contact_list->data;
+          if (contact_list->data)
+            continue;
+        }
+        g_list_free(contact_list);
+        return FALSE;
+      }
+      ret = TRUE;
+    }
+
+    g_list_free(contact_list);
+  }
+  return ret;
+}
+
+static void
+history_query(GObject *obj, osso_abook_data *data)
+{
+  OssoABookContact *starter_contact, *c;
+  gboolean merge_btn, history_btn;
+  RTComEl *rtcomel;
+  RTComElQuery *comm_hist_query;
+  RTComElIter *events;
+  GList *master_contacts_list;
+
+  starter_contact = get_starter_contact(data);
+
+  gobj_set_visible(obj, "send-card-button",
+                   !OSSO_ABOOK_IS_VOICEMAIL_CONTACT(starter_contact));
+
+  gobj_set_visible(obj, "send-detail-button",
+                   !OSSO_ABOOK_IS_VOICEMAIL_CONTACT(starter_contact));
+
+  if (starter_contact && OSSO_ABOOK_IS_VOICEMAIL_CONTACT(starter_contact))
+    merge_btn = FALSE;
+  else
+  {
+    master_contacts_list = osso_abook_aggregator_list_master_contacts(
+        OSSO_ABOOK_AGGREGATOR(data->aggregator));
+
+    if (!master_contacts_list)
+    {
+      merge_btn = FALSE;
+      goto listfree;
+    }
+
+    while (1)
+    {
+      c = master_contacts_list->data;
+
+      if (starter_contact != c && (!c || !OSSO_ABOOK_IS_VOICEMAIL_CONTACT(c)))
+        break;
+
+      master_contacts_list = master_contacts_list->next;
+      if (!master_contacts_list)
+      {
+        merge_btn = FALSE;
+        goto listfree;
+      }
+    }
+    merge_btn = TRUE;
+
+listfree:
+    g_list_free(master_contacts_list);
+  }
+
+  gobj_set_visible(obj, "merge-button", merge_btn);
+  gobj_set_visible(obj, "req-auth-button", should_auth_request(starter_contact));
+  gobj_set_visible(obj, "shortcut-button", osso_abook_contact_shortcut_exists(
+                                              starter_contact, NULL) == FALSE);
+
+  rtcomel = rtcom_el_get_shared();
+  comm_hist_query = create_communication_history_query(starter_contact,
+                                                       rtcomel);
+
+  if (comm_hist_query)
+  {
+    events = rtcom_el_get_events(rtcomel, comm_hist_query);
+
+    if (events)
+    {
+      history_btn = rtcom_el_iter_first(events) != FALSE;
+      g_object_unref(comm_hist_query);
+      g_object_unref(events);
+    }
+    else
+    {
+      g_object_unref(comm_hist_query);
+      history_btn = FALSE;
+    }
+  }
+  else
+  {
+    g_warning("error preparing communication history query");
+    history_btn = FALSE;
+  }
+
+  g_object_unref(rtcomel);
+  gobj_set_visible(obj, "comm-history-button", history_btn);
 }
 
 static void

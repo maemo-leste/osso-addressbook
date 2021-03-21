@@ -101,7 +101,7 @@ merge_cb(const char *uid, gpointer user_data)
     merge(user_data, uid);
 }
 
-static OssoABookContact *
+OssoABookContact *
 get_starter_contact(osso_abook_data *data)
 {
   OssoABookTouchContactStarter *starter;
@@ -129,7 +129,7 @@ run_dialog(osso_abook_data *data, GtkDialog *dialog)
   return result;
 }
 
-static RTComElQuery *
+RTComElQuery *
 create_communication_history_query(OssoABookContact *contact, RTComEl *rtcomel)
 {
   RTComElQuery *query;

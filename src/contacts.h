@@ -21,6 +21,7 @@
 #define CONTACTS_H
 
 #include <libosso-abook/osso-abook-menu-extension.h>
+#include <rtcom-eventlogger/eventlogger-query.h>
 
 #define CONTACT_MENU_COUNT 8
 
@@ -29,6 +30,9 @@ extern OssoABookMenuEntry contact_menu_actions[CONTACT_MENU_COUNT];
 void set_contacts_mode(osso_abook_data *data, int mode);
 void scroll_to_top_if_needed(osso_abook_data *data);
 void merge(osso_abook_data *data, const char *uid);
+RTComElQuery *create_communication_history_query(OssoABookContact *contact, RTComEl *rtcomel);
+OssoABookContact *get_starter_contact(osso_abook_data *data);
+
 
 typedef struct _OssoABookGetYourContactsDialog OssoABookGetYourContactsDialog;
 typedef struct _OssoABookGetYourContactsDialogClass OssoABookGetYourContactsDialogClass;
