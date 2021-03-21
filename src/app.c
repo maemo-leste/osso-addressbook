@@ -928,7 +928,8 @@ toggle_menu(GObject *obj, osso_abook_data *data)
 {
   GtkWidget *wid = g_object_get_data(G_OBJECT(obj), "sim-merge-bt");
 
-  if (osso_abook_aggregator_get_master_contact_count(data->aggregator))
+  if (osso_abook_aggregator_get_master_contact_count(
+          OSSO_ABOOK_AGGREGATOR(data->aggregator)))
     gtk_widget_show(wid);
   else
     gtk_widget_hide(wid);
