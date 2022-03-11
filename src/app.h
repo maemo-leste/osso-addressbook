@@ -60,7 +60,7 @@ typedef struct
   gboolean import_started;
   gulong sequence_complete_id;
   int gap60;
-  int field_64;
+  GtkWidget *groups_area;
   GtkWidget *starter_window;
   GtkWidget *stacked_group;
   int field_70;
@@ -79,9 +79,9 @@ typedef struct
   int field_A4;
   GtkWidget *align;
   guint one_day_timer_id;
-  int quit_on_close;
-  int field_B4;
-  int field_B8;
+  gboolean quit_on_close;
+  gboolean field_B4;
+  gboolean field_B8;
 } osso_abook_data;
 
 typedef struct
@@ -103,5 +103,8 @@ void app_exit_main_loop(osso_abook_data *data);
 void app_show(osso_abook_data *data);
 
 void select_contact_row(osso_abook_data *data, GtkTreePath *path);
+void
+create_menu(osso_abook_data *data, OssoABookMenuEntry *entries,
+            int entries_count, OssoABookContact *contact);
 
 #endif /* APP_H */

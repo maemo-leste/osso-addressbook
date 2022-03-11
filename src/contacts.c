@@ -17,89 +17,136 @@
  *
  */
 
-#include <libintl.h>
+#include <libosso-abook/osso-abook-recent-group.h>
 
-#include <libosso-abook/osso-abook-aggregator.h>
-#include <libosso-abook/osso-abook-errors.h>
-#include <libosso-abook/osso-abook-touch-contact-starter.h>
-#include <libosso-abook/osso-abook-util.h>
-#include <rtcom-eventlogger-ui/rtcom-log-model.h>
-#include <rtcom-eventlogger-ui/rtcom-log-view.h>
-#include <libebook-contacts/libebook-contacts.h>
-
-#include "app.h"
 #include "actions.h"
+#include "menu.h"
+#include "osso-abook-get-your-contacts-dialog.h"
+
 #include "contacts.h"
-
-static gboolean your_contacts_dialog_shown = FALSE;
-
-gboolean
-osso_abook_get_your_contacts_dialog_already_shown()
-{
-  return your_contacts_dialog_shown;
-}
-
-/* TODO: Move what's necessary to actions.c */
 
 void
 merge(osso_abook_data *data, const char *uid)
 {
-  OssoABookTreeView *contact_view;
-  GtkTreeView *tree_view;
-  GtkTreeModel *tree_model;
-  GtkTreeModelFilter *tf;
-  GtkTreePath *model_path;
-  GtkTreeIter iter, filter_iter;
+  GtkTreeIter iter;
 
-  if (!osso_abook_contact_model_find_contact(data->contact_model, uid, &iter))
+  if (osso_abook_contact_model_find_contact(data->contact_model, uid, &iter))
+  {
+    GtkTreeView *tree_view = osso_abook_tree_view_get_tree_view(
+          OSSO_ABOOK_TREE_VIEW(data->contact_view));
+    GtkTreeModel *tree_model = gtk_tree_view_get_model(tree_view);
+    GtkTreePath *model_path;
+    GtkTreeIter filter_iter;
+
+    gtk_tree_model_filter_convert_child_iter_to_iter(
+          GTK_TREE_MODEL_FILTER(tree_model), &filter_iter, &iter);
+    model_path = gtk_tree_model_get_path(tree_model, &filter_iter);
+    select_contact_row(data, model_path);
+    gtk_tree_path_free(model_path);
+  }
+  else
   {
     g_free(data->selected_row_uid);
     data->selected_row_uid = g_strdup(uid);
-    return;
   }
-
-  contact_view = OSSO_ABOOK_TREE_VIEW(data->contact_view);
-  tree_view = osso_abook_tree_view_get_tree_view(contact_view);
-  tree_model = gtk_tree_view_get_model(tree_view);
-  tf = GTK_TREE_MODEL_FILTER(tree_model);
-  gtk_tree_model_filter_convert_child_iter_to_iter(tf, &filter_iter, &iter);
-  model_path = gtk_tree_model_get_path(tree_model, &filter_iter);
-  select_contact_row(data, model_path);
-  gtk_tree_path_free(model_path);
 }
 
 static void
-merge_cb(const char *uid, gpointer user_data)
+recent_view_show_contact_cb(OssoABookRecentView *view,
+                            OssoABookContact *contact, osso_abook_data *data)
 {
-  if (uid)
-    merge(user_data, uid);
+  create_menu(data, contact_menu_actions, 8, contact);
 }
 
-OssoABookContact *
-get_starter_contact(osso_abook_data *data)
+void
+set_contacts_mode(osso_abook_data *data, int mode)
 {
-  OssoABookTouchContactStarter *starter;
+  OssoABookGroup *group;
 
-  if (!data->starter_window)
-    return NULL;
+  if (data->contacts_mode == mode)
+    return;
 
-  starter = g_object_get_data(G_OBJECT(data->starter_window), "starter");
-  if (!starter)
-    return NULL;
+  data->contacts_mode = mode;
+  gconf_client_set_int(osso_abook_get_gconf_client(),
+                       "/apps/osso-addressbook/contacts-mode",
+                       data->contacts_mode, NULL);
+  if (mode == 1)
+  {
+    gtk_widget_hide(data->live_search);
+    hildon_live_search_widget_unhook(HILDON_LIVE_SEARCH(data->live_search));
 
-  return osso_abook_touch_contact_starter_get_contact(
-      OSSO_ABOOK_TOUCH_CONTACT_STARTER(starter));
+    if (!data->recent_view)
+    {
+      data->recent_view = osso_abook_recent_view_new(
+            OSSO_ABOOK_AGGREGATOR(data->aggregator));
+      g_object_ref_sink(data->recent_view);
+      g_signal_connect(data->recent_view, "show-contact",
+                       G_CALLBACK(recent_view_show_contact_cb), data);
+    }
+
+    gtk_container_remove(GTK_CONTAINER(data->align),
+                         GTK_WIDGET(data->contact_view));
+    gtk_container_add(GTK_CONTAINER(data->align),
+                      GTK_WIDGET(data->recent_view));
+    gtk_widget_show(GTK_WIDGET(data->recent_view));
+
+    osso_abook_recent_view_install_live_search(data->recent_view,
+                                               HILDON_WINDOW(data->window));
+    group = osso_abook_recent_group_get();
+  }
+  else
+  {
+    GtkTreeView *tree_view;
+
+    group = osso_abook_all_group_get();
+    osso_abook_recent_view_remove_live_search(data->recent_view);
+    gtk_widget_hide(GTK_WIDGET(data->recent_view));
+    gtk_container_remove(GTK_CONTAINER(data->align),
+                         GTK_WIDGET(data->recent_view));
+    gtk_container_add(GTK_CONTAINER(data->align),
+                      GTK_WIDGET(data->contact_view));
+    tree_view = osso_abook_tree_view_get_tree_view(
+          OSSO_ABOOK_TREE_VIEW(data->contact_view));
+    hildon_live_search_widget_hook(HILDON_LIVE_SEARCH(data->live_search),
+                                   GTK_WIDGET(data->window),
+                                   GTK_WIDGET(tree_view));
+  }
+
+  scroll_to_top_if_needed(data);
+  gtk_window_set_title(GTK_WINDOW(data->window),
+                       osso_abook_group_get_display_title(group));
+  set_active_toggle_button(data);
 }
 
-static gint
-run_dialog(osso_abook_data *data, GtkDialog *dialog)
+void
+scroll_to_top_if_needed(osso_abook_data *data)
 {
-  gint result;
+  if (data->contacts_mode == 1)
+  {
+    if (data->field_B8)
+    {
+      osso_abook_recent_view_scroll_to_top(data->recent_view);
+      data->field_B8 = FALSE;
+    }
+  }
+  else if (data->contacts_mode == 0)
+  {
+    if (data->field_B4)
+    {
+      GtkWidget *area = osso_abook_tree_view_get_pannable_area(
+            OSSO_ABOOK_TREE_VIEW(data->contact_view));
 
-  data->dialog_open = TRUE;
-  result = gtk_dialog_run(dialog);
-  gtk_widget_hide(GTK_WIDGET(dialog));
-  data->dialog_open = FALSE;
-  return result;
+      if (gtk_widget_get_realized(area))
+        hildon_pannable_area_jump_to(HILDON_PANNABLE_AREA(area), -1, 0);
+
+      data->field_B4 = FALSE;
+    }
+  }
 }
 
+void
+open_delete_contacts_view_window(osso_abook_data *data)
+{
+  /* implement me */
+  g_assert(0);
+}

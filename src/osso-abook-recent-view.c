@@ -17,6 +17,8 @@
  *
  */
 
+#include "config.h"
+
 #include <hildon/hildon.h>
 #include <gtk/gtkprivate.h>
 
@@ -344,4 +346,46 @@ osso_abook_recent_view_hide_live_search(OssoABookRecentView *self)
 
   if (priv->window)
     gtk_widget_hide(priv->live_search);
+}
+
+void
+osso_abook_recent_view_remove_live_search(OssoABookRecentView *self)
+{
+  OssoABookRecentViewPrivate *priv;
+  HildonWindow *window;
+
+  g_return_if_fail(OSSO_ABOOK_IS_RECENT_VIEW(self));
+
+  priv = OSSO_ABOOK_RECENT_VIEW_PRIVATE(self);
+
+  g_return_if_fail(HILDON_IS_WINDOW (priv->window));
+
+  hildon_window_remove_toolbar(window, GTK_TOOLBAR(priv->live_search));
+
+  /* FIXME - Umm... what? */
+  priv->window = NULL;
+}
+
+OssoABookRecentView *
+osso_abook_recent_view_new(OssoABookAggregator *aggregator)
+{
+  return g_object_new(OSSO_ABOOK_TYPE_RECENT_VIEW,
+                      "aggregator", aggregator,
+                      NULL);
+}
+
+void
+osso_abook_recent_view_scroll_to_top(OssoABookRecentView *self)
+{
+  OssoABookRecentViewPrivate *priv;
+
+  g_return_if_fail(OSSO_ABOOK_IS_RECENT_VIEW(self));
+
+  priv = OSSO_ABOOK_RECENT_VIEW_PRIVATE(self);
+
+  if (gtk_widget_get_realized(GTK_WIDGET(priv->pannable_area)))
+  {
+    hildon_pannable_area_jump_to(HILDON_PANNABLE_AREA(priv->pannable_area),
+                                 -1, 0);
+  }
 }

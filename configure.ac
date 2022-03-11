@@ -23,7 +23,8 @@ PKG_CHECK_MODULES(
 	glib-2.0
 	gobject-2.0
 	hildon-1
-	dbus-1)
+	dbus-1
+	hildon-fm-2)
 
 AC_ARG_ENABLE(debug,        [  --enable-debug           compile with DEBUG],,enable_debug=no)
 

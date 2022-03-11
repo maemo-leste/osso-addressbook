@@ -285,3 +285,24 @@ app_menu_from_menu_entries(GtkAccelGroup *accel_group,
 
   return menu;
 }
+
+void
+set_active_toggle_button(osso_abook_data *data)
+{
+  if (data->contacts_mode == 1)
+  {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(main_menu_filter_buttons[2]),
+                                 TRUE);
+  }
+  else if (osso_abook_settings_get_contact_order() ==
+           OSSO_ABOOK_CONTACT_ORDER_PRESENCE)
+  {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(main_menu_filter_buttons[1]),
+                                 TRUE);
+  }
+  else
+  {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(main_menu_filter_buttons[0]),
+                                 TRUE);
+  }
+}

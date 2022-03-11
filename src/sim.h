@@ -1,7 +1,7 @@
 /*
- * importer.h
+ * sim.h
  *
- * Copyright (C) 2021 Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
+ * Copyright (C) 2022 Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
  *
  * This library is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by
@@ -17,15 +17,16 @@
  *
  */
 
-#ifndef IMPORTER_H
-#define IMPORTER_H
+#ifndef SIM_H
+#define SIM_H
+
+#include "osso-abook-sim-group.h"
 
 void
-do_import(GtkWindow *parent, const char *uri, GSourceFunc import_finished_cb,
-          gpointer user_data);
+sim_import_all(GtkWidget *parent, OssoABookSimGroup *sim_group, GtkWidget *note,
+               GtkWidget *progress_bar);
 
 void
-do_import_dir(GtkWindow *parent, const gchar *uri,
-              GSourceFunc import_finished_cb, gpointer user_data);
+sim_import_contact(OssoABookContact *contact);
 
-#endif // IMPORTER_H
+#endif // SIM_H

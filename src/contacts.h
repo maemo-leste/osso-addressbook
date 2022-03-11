@@ -23,15 +23,19 @@
 #include <libosso-abook/osso-abook-menu-extension.h>
 #include <rtcom-eventlogger/eventlogger-query.h>
 
-void set_contacts_mode(osso_abook_data *data, int mode);
-void scroll_to_top_if_needed(osso_abook_data *data);
-void merge(osso_abook_data *data, const char *uid);
-OssoABookContact *get_starter_contact(osso_abook_data *data);
+void
+set_contacts_mode(osso_abook_data *data, int mode);
 
-typedef struct _OssoABookGetYourContactsDialog OssoABookGetYourContactsDialog;
-typedef struct _OssoABookGetYourContactsDialogClass OssoABookGetYourContactsDialogClass;
+void
+scroll_to_top_if_needed(osso_abook_data *data);
 
-GtkWidget *osso_abook_get_your_contacts_dialog_new(osso_abook_data *data);
-gboolean osso_abook_get_your_contacts_dialog_already_shown();
+void
+merge(osso_abook_data *data, const char *uid);
+
+OssoABookContact *
+get_starter_contact(osso_abook_data *data);
+
+void
+open_delete_contacts_view_window(osso_abook_data *data);
 
 #endif // CONTACTS_H

@@ -26,9 +26,13 @@
 #include <libosso-abook/osso-abook-row-model.h>
 #include <libosso-abook/osso-abook-util.h>
 #include <libosso-abook/osso-abook-enums.h>
+#include <libosso-abook/osso-abook-touch-contact-starter.h>
 
 #include <libintl.h>
 #include <string.h>
+
+#include "osso-abook-sim-group.h"
+#include "osso-abook-get-your-contacts-dialog.h"
 
 #include "app.h"
 #include "actions.h"
@@ -749,13 +753,6 @@ action_started_cb(OssoABookTouchContactStarter *starter, osso_abook_data *data)
   }
 }
 
-static gboolean
-merge_cb0(int unused, const char *uid, osso_abook_data *data)
-{
-  merge(data, uid);
-  return TRUE;
-}
-
 static void
 contact_deleted_cb(int unused, osso_abook_data *data)
 {
@@ -770,7 +767,7 @@ static void
 editor_started_cb(int unused, gpointer instance, gpointer data)
 {
   g_signal_connect_after(instance, "contact-saved",
-                         G_CALLBACK(merge_cb0), data);
+                         G_CALLBACK(contact_saved_cb), data);
   g_signal_connect(instance, "contact-deleted",
                    G_CALLBACK(contact_deleted_cb), data);
 }
@@ -936,7 +933,7 @@ toggle_menu(GObject *obj, osso_abook_data *data)
     gtk_widget_hide(wid);
 }
 
-static void
+void
 create_menu(osso_abook_data *data, OssoABookMenuEntry *entries,
             int entries_count, OssoABookContact *contact)
 {
@@ -1021,11 +1018,109 @@ contact_view_contact_activated_cb(OssoABookContactView *view,
 static void
 sim_group_available_cb(OssoABookSimGroup *sim_group, osso_abook_data *data)
 {
-  if ( !data->sim_group_ready )
+  if (!data->sim_group_ready)
   {
     data->sim_group_ready = TRUE;
     update_view_groups_accounts(data);
   }
+}
+
+static void
+vm_contact_async_commit_cb(EBook *book, EBookStatus status, gpointer closure)
+{
+  gchar *imsi = closure;
+
+  if (!status && imsi && *imsi)
+  {
+    gconf_client_set_string(osso_abook_get_gconf_client(),
+                            OSSO_ABOOK_SETTINGS_KEY_LAST_IMSI, imsi, NULL);
+  }
+  else
+    g_warning("failed to commit (new) voicemail contact");
+
+  g_free(imsi);
+}
+
+static void
+sim_import_contact_as_voicemail(OssoABookContact *contact, const char *imsi)
+{
+  GSList *numbers = osso_abook_settings_get_voicemail_numbers();
+  GList *attrs = NULL;
+  GList *l;
+  GList *tel = NULL;
+  OssoABookVoicemailContact *vmc;
+
+  if (contact)
+    attrs = e_vcard_get_attributes(E_VCARD(contact));
+
+  for (l = g_list_last(attrs); l; l = l->prev)
+  {
+    if (!g_strcmp0(e_vcard_attribute_get_name(l->data), EVC_TEL))
+    {
+      GList *v = e_vcard_attribute_get_values(l->data);
+
+      if (v)
+      {
+        const char *phone_number = v->data;
+
+        if (phone_number && *phone_number)
+        {
+          OssoABookVoicemailNumber *vmn;
+
+          vmn = osso_abook_voicemail_number_new(phone_number, imsi, NULL);
+          numbers = g_slist_prepend(numbers, vmn);
+          break;
+        }
+      }
+    }
+  }
+
+  if (numbers)
+  {
+    tel = g_list_prepend(
+          NULL, ((OssoABookVoicemailNumber *)(numbers->data))->phone_number);
+  }
+
+  if (osso_abook_settings_set_voicemail_numbers(numbers) &&
+      (vmc = osso_abook_voicemail_contact_get_default()))
+  {
+    e_contact_set(E_CONTACT(vmc), E_CONTACT_TEL, tel);
+    osso_abook_contact_async_commit(OSSO_ABOOK_CONTACT(vmc), NULL,
+                                    vm_contact_async_commit_cb, g_strdup(imsi));
+    g_object_unref(vmc);
+  }
+
+  osso_abook_voicemail_number_list_free(numbers);
+  g_list_free(tel);
+}
+
+static void
+import_voicemail_contact(osso_abook_data *data)
+{
+  OssoABookContact *sim_vm_contact;
+  const gchar *imsi;
+  gchar *last_imsi;
+
+  if (!data->voicemail_contact_available || !data->sim_capabilities_available)
+    return;
+
+  sim_vm_contact = osso_abook_sim_group_get_voicemail_contact(
+        OSSO_ABOOK_SIM_GROUP(data->sim_group));
+
+  imsi = osso_abook_sim_group_get_imsi(OSSO_ABOOK_SIM_GROUP(data->sim_group));
+
+  last_imsi = gconf_client_get_string(osso_abook_get_gconf_client(),
+                                      OSSO_ABOOK_SETTINGS_KEY_LAST_IMSI, NULL);
+  if (imsi && last_imsi && g_strcmp0(last_imsi, imsi))
+  {
+    if (!osso_abook_gconf_contact_is_deleted(
+          OSSO_ABOOK_GCONF_CONTACT(osso_abook_voicemail_contact_get_default())))
+    {
+      sim_import_contact_as_voicemail(sim_vm_contact, imsi);
+    }
+  }
+
+  g_free(last_imsi);
 }
 
 static void
@@ -1251,10 +1346,11 @@ app_create(osso_context_t *osso, const gchar *arg1, osso_abook_data *data)
   g_signal_connect(data->window, "realize",
                    G_CALLBACK(window_realize_cb), data);
 
-  data->main_menu = app_menu_from_menu_entries(accel_group,
-                                               main_menu_actions, 7,
-                                               main_menu_filters, 3,
-                                               data, 0);
+  data->main_menu = app_menu_from_menu_entries(
+        accel_group,
+        main_menu_actions,  MENU_ACTIONS_COUNT,
+        main_menu_filters, 3,
+        data, NULL);
 
   append_menu_extension_entries(data->main_menu, "osso-abook-main-view",
                                 GTK_WINDOW(data->window), 0, data);

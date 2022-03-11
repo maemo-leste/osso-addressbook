@@ -58,11 +58,24 @@ struct _OssoABookRecentView
   GtkVBox parent;
 };
 
+GType
+osso_abook_recent_view_get_type(void) G_GNUC_CONST;
+
 void
 osso_abook_recent_view_install_live_search(OssoABookRecentView *self,
                                            HildonWindow *window);
 void
 osso_abook_recent_view_hide_live_search(OssoABookRecentView *self);
+
+void
+osso_abook_recent_view_remove_live_search(OssoABookRecentView *self);
+
+OssoABookRecentView *
+osso_abook_recent_view_new(OssoABookAggregator *aggregator);
+
+void
+osso_abook_recent_view_scroll_to_top(OssoABookRecentView *self);
+
 
 G_END_DECLS
 

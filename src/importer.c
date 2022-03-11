@@ -17,4 +17,19 @@
  *
  */
 
+#include <gtk/gtk.h>
+
+void
+do_import(GtkWindow *parent, const char *uri, GSourceFunc import_finished_cb,
+          gpointer user_data)
+{
+  g_assert(0 && "implement me");
+}
+
+void
+do_import_dir(GtkWindow *parent, const gchar *uri,
+              GSourceFunc import_finished_cb, gpointer user_data)
+{
+  g_assert(0 && "implement me");
+}
 

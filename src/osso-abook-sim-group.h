@@ -62,6 +62,9 @@ struct _OssoABookSimGroup
   OssoABookGroup parent;
 };
 
+GType
+osso_abook_sim_group_get_type(void) G_GNUC_CONST;
+
 OssoABookSimGroup *
 osso_abook_sim_group_new();
 
