@@ -1,6 +1,6 @@
 bin_PROGRAMS = osso-addressbook
 
-osso_addressbook_CFLAGS = $(OSSO_ABOOK_CFLAGS)
+osso_addressbook_CFLAGS = $(OSSO_ABOOK_CFLAGS) -DOSSO_ABOOK_DEBUG
 osso_addressbook_LDFLAGS = $(OSSO_ABOOK_LIBS)
 osso_addressbook_SOURCES = \
 			hw.c \

@@ -390,7 +390,6 @@ static void
 state_save(osso_abook_data *data)
 {
   GKeyFile *gkeyfile;
-  GtkObject *contact_view;
   GtkTreeView *tree_view;
   gint *indices;
   GtkTreeSelection *tree_selection;
@@ -406,7 +405,7 @@ state_save(osso_abook_data *data)
   GtkTreePath *path;
 
   gkeyfile = g_key_file_new();
-  gkey_set_focus(gkeyfile, "ContactView", GTK_WIDGET(contact_view));
+  gkey_set_focus(gkeyfile, "ContactView", GTK_WIDGET(data->contact_view));
   tree_view = osso_abook_tree_view_get_tree_view(
                 OSSO_ABOOK_TREE_VIEW(data->contact_view));
   gtk_tree_view_get_cursor(tree_view, &path, NULL);
@@ -741,8 +740,8 @@ action_started_cb(OssoABookTouchContactStarter *starter, osso_abook_data *data)
   action = osso_abook_touch_contact_starter_get_started_action(starter);
 
   action_name = osso_abook_contact_action_get_name(action);
-  OSSO_ABOOK_NOTE(OSSO_ABOOK_DEBUG_GENERIC,
-                  "TouchContactStarter::action-started for %s", action_name);
+  OSSO_ABOOK_NOTE(GENERIC, "TouchContactStarter::action-started for %s",
+                  action_name);
 
   if (action == OSSO_ABOOK_CONTACT_ACTION_CREATE_ACCOUNT)
     return;

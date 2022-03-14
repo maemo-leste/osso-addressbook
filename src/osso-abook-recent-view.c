@@ -65,7 +65,7 @@ static guint signals[LAST_SIGNAL] = {};
 G_DEFINE_TYPE_WITH_PRIVATE(
   OssoABookRecentView,
   osso_abook_recent_view,
-  OSSO_ABOOK_TYPE_RECENT_VIEW
+  GTK_TYPE_VBOX
 );
 
 static void
