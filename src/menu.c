@@ -18,8 +18,11 @@
  */
 
 #include <glib-2.0/glib.h>
+
+#include <libosso-abook/osso-abook-account-manager.h>
 #include <libosso-abook/osso-abook-plugin-manager.h>
 #include <libosso-abook/osso-abook-settings.h>
+#include <libosso-abook/osso-abook-profile-group.h>
 
 #include <libintl.h>
 
@@ -305,4 +308,98 @@ set_active_toggle_button(osso_abook_data *data)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(main_menu_filter_buttons[0]),
                                  TRUE);
   }
+}
+
+GSList *
+get_protocol_groups()
+{
+  OssoABookAccountManager *account_manager =
+      osso_abook_account_manager_get_default();
+  GList *protocols = osso_abook_account_manager_get_protocols(account_manager);
+  GList *protocol;
+  GSList *groups = NULL;
+
+  for (protocol = protocols; protocol; protocol = protocol->next)
+  {
+    if (osso_abook_caps_from_tp_protocol(protocol->data) &
+        ~OSSO_ABOOK_CAPS_ADDRESSBOOK)
+    {
+      const gchar *vcard_field = tp_protocol_get_vcard_field(protocol->data);
+
+      if (vcard_field && strcmp(vcard_field, EVC_TEL))
+      {
+        GList *accounts = osso_abook_account_manager_list_by_protocol(
+              account_manager, tp_protocol_get_name(protocol->data));
+        GList *l;
+
+        for (l = accounts; l; l = l->next)
+        {
+          if (tp_account_is_enabled(l->data))
+          {
+            OssoABookGroup *group =
+                osso_abook_profile_group_get(protocol->data);
+
+            if (!g_slist_find(groups, group))
+              groups = g_slist_prepend(groups, group);
+          }
+        }
+
+        g_list_free(accounts);
+
+      }
+    }
+  }
+
+  g_list_free(protocols);
+
+  return groups;
+}
+
+static guint
+get_group_count(osso_abook_data *data)
+{
+  GSList *protocol_groups = get_protocol_groups();
+  guint cnt = g_slist_length(protocol_groups) +
+      g_slist_length(data->service_groups);
+
+  if (data->sim_group_ready)
+    cnt++;
+
+  g_slist_free(protocol_groups);
+
+  return cnt;
+}
+
+void
+update_menu(osso_abook_data *data)
+{
+  GtkWidget *export_button = app_menu_get_widget(data->main_menu, "export-bt");
+  GtkWidget *delete_button = app_menu_get_widget(data->main_menu, "delete-bt");
+  GtkWidget *groups_button = app_menu_get_widget(data->main_menu, "groups-bt");
+
+  if (osso_abook_aggregator_get_master_contact_count(
+        OSSO_ABOOK_AGGREGATOR(data->aggregator)))
+  {
+    if (delete_button)
+      gtk_widget_show(delete_button);
+
+    if (export_button)
+      gtk_widget_show(export_button);
+  }
+  else
+  {
+    if (delete_button)
+      gtk_widget_hide(delete_button);
+
+    if (export_button)
+      gtk_widget_hide(export_button);
+  }
+
+  if (get_group_count(data) > 0)
+  {
+    if (groups_button)
+        gtk_widget_show(groups_button);
+  }
+  else if (groups_button)
+    gtk_widget_hide(groups_button);
 }

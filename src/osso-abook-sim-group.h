@@ -65,7 +65,7 @@ struct _OssoABookSimGroup
 GType
 osso_abook_sim_group_get_type(void) G_GNUC_CONST;
 
-OssoABookSimGroup *
+OssoABookGroup *
 osso_abook_sim_group_new();
 
 OssoABookContact *

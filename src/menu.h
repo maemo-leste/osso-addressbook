@@ -50,5 +50,7 @@ app_menu_from_menu_entries(GtkAccelGroup *accel_group,
 
 void
 update_menu(osso_abook_data *data);
+GSList *
+get_protocol_groups();
 
 #endif // MENU_H

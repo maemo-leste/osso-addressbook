@@ -29,4 +29,7 @@ sim_import_all(GtkWidget *parent, OssoABookSimGroup *sim_group, GtkWidget *note,
 void
 sim_import_contact(OssoABookContact *contact);
 
+void
+open_sim_view_window(osso_abook_data *data, OssoABookGroup *group);
+
 #endif // SIM_H

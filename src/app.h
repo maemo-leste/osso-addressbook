@@ -72,7 +72,7 @@ typedef struct
   gboolean sim_group_ready;
   gboolean voicemail_contact_available;
   gboolean sim_capabilities_available;
-  OssoABookSimGroup *sim_group;
+  OssoABookGroup *sim_group;
   int gap98;
   int field_9C;
   int field_A0;
@@ -98,13 +98,22 @@ typedef struct
 gboolean app_create(osso_context_t *osso, const gchar *arg1,
                     osso_abook_data *data);
 
-void app_destroy(osso_abook_data *data);
-void app_exit_main_loop(osso_abook_data *data);
-void app_show(osso_abook_data *data);
+void
+app_destroy(osso_abook_data *data);
+void
+app_exit_main_loop(osso_abook_data *data);
+void
+app_show(osso_abook_data *data);
 
-void select_contact_row(osso_abook_data *data, GtkTreePath *path);
+void
+select_contact_row(osso_abook_data *data, GtkTreePath *path);
+
 void
 create_menu(osso_abook_data *data, OssoABookMenuEntry *entries,
             int entries_count, OssoABookContact *contact);
+const char *
+_get_vcard_field_from_uri(const gchar *uri);
+
+#define IS_EMPTY(s) (!((s) && (((const char *)(s))[0])))
 
 #endif /* APP_H */

@@ -7,6 +7,7 @@ osso_addressbook_SOURCES = \
 			sim.c \
 			importer.c \
 			service.c \
+			groups.c \
 			osso-abook-get-your-contacts-dialog.c \
 			osso-abook-sim-group.c \
 			osso-abook-recent-view.c \

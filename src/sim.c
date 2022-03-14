@@ -21,6 +21,7 @@
 
 #include <libosso-abook/osso-abook-util.h>
 
+#include "app.h"
 #include "sim.h"
 
 void
@@ -49,4 +50,11 @@ sim_import_contact(OssoABookContact *contact)
   book = osso_abook_system_book_dup_singleton(FALSE, NULL);
   _import_contact(book, E_CONTACT(contact));
   g_object_unref(book);
+}
+
+void
+open_sim_view_window(osso_abook_data *data, OssoABookGroup *group)
+{
+  /* implement me */
+  g_assert(0);
 }

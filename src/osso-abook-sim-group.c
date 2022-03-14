@@ -784,7 +784,7 @@ osso_abook_sim_group_init(OssoABookSimGroup *sim_group)
   }
 }
 
-OssoABookSimGroup *
+OssoABookGroup *
 osso_abook_sim_group_new()
 {
   return g_object_new(OSSO_ABOOK_TYPE_SIM_GROUP, NULL);

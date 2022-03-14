@@ -25,6 +25,7 @@
 #include <libosso-abook/osso-abook-debug.h>
 #include <libosso-abook/osso-abook-row-model.h>
 #include <libosso-abook/osso-abook-util.h>
+#include <libosso-abook/osso-abook-log.h>
 #include <libosso-abook/osso-abook-enums.h>
 #include <libosso-abook/osso-abook-touch-contact-starter.h>
 
@@ -1589,4 +1590,25 @@ app_show(osso_abook_data *data)
     osso_abook_waitable_call_when_ready(OSSO_ABOOK_WAITABLE(data->aggregator),
                                         check_if_no_contacts, data, NULL);
   }
+}
+
+const char *
+_get_vcard_field_from_uri(const gchar *uri)
+{
+  if (g_str_has_prefix(uri, "mailto:"))
+    return "email";
+
+  if (g_str_has_prefix(uri, "xmpp:"))
+    return "x-jabber";
+
+  if (g_str_has_prefix(uri, "sipto:") || g_str_has_prefix(uri, "sip:"))
+    return "x-sip";
+
+  if (g_str_has_prefix(uri, "callto:") || g_str_has_prefix(uri, "tel:") ||
+      g_str_has_prefix(uri, "sms:"))
+    return "tel";
+
+  OSSO_ABOOK_WARN("Unsupported URI: %s", uri);
+
+  return NULL;
 }
