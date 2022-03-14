@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<gconfschemafile>
+  <schemalist>
+    <schema>
+      <key>/schemas/apps/osso-addressbook/main_window/paned_position</key>
+      <applyto>/apps/osso-addressbook/main_window/paned_position</applyto>
+      <owner>osso-addressbook</owner>
+      <type>int</type>
+      <default>240</default>
+      <locale name="C">
+        <short>Paned position</short>
+        <long>Position of the divider of the main window paned.</long>
+      </locale>
+    </schema>
+
+    <schema>
+      <key>/schemas/apps/osso-addressbook/main_window/selected_group</key>
+      <applyto>/apps/osso-addressbook/main_window/selected_group</applyto>
+      <owner>osso-addressbook</owner>
+      <type>string</type>
+      <default>OssoABookAllGroup</default>
+      <locale name="C">
+        <short>Selected group</short>
+        <long>The currently selected group.</long>
+      </locale>
+    </schema>
+
+    <schema>
+      <key>/schemas/apps/osso-addressbook/home-applets</key>
+      <applyto>/apps/osso-addressbook/home-applets</applyto>
+      <owner>osso-addressbook</owner>
+      <type>list</type>
+      <list_type>string</list_type>
+      <default></default>
+      <locale name="C">
+        <short>Home applets</short>
+        <long>The list of contact UUIDs that must be shown on home view.</long>
+      </locale>
+    </schema>
+  </schemalist>
+</gconfschemafile>

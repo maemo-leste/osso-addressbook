@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=com.nokia.osso_addressbook
+Exec=@prefix@/bin/osso-addressbook
+

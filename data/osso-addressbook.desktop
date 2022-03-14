@@ -1,0 +1,50 @@
+[Desktop Entry]
+Encoding=UTF-8
+Version=1.0
+Type=Application
+Name=addr_ap_address_book
+Comment=addr_ap_address_book_thumb
+Exec=/usr/bin/osso-addressbook
+StartupWMClass=osso-addressbook
+Icon=general_contacts
+MimeType=text/x-vcard
+X-Maemo-Prestarted=always
+X-Maemo-Prestarted-Priority=10000
+X-Osso-Service=osso_addressbook
+X-Osso-URI-Actions=mailto;xmpp;sipto;sip;
+X-Text-Domain=osso-addressbook
+
+[X-Osso-URI-Action Handler mailto]
+Method=add_account
+Name=addr_me_cs_addtocontacts
+TranslationDomain=osso-addressbook
+
+[X-Osso-URI-Action Handler xmpp]
+Method=add_account
+Name=addr_me_cs_addtocontacts
+TranslationDomain=osso-addressbook
+
+[X-Osso-URI-Action Handler sipto]
+Method=add_account
+Name=addr_me_cs_addtocontacts
+TranslationDomain=osso-addressbook
+
+[X-Osso-URI-Action Handler sip]
+Method=add_account
+Name=addr_me_cs_addtocontacts
+TranslationDomain=osso-addressbook
+
+[X-Osso-URI-Action Handler tel]
+Method=add_account
+Name=addr_me_cs_addtocontacts
+TranslationDomain=osso-addressbook
+
+[X-Osso-URI-Action Handler sms]
+Method=add_account
+Name=addr_me_cs_addtocontacts
+TranslationDomain=osso-addressbook
+
+[X-Osso-URI-Action Handler callto]
+Method=add_account
+Name=addr_me_cs_addtocontacts
+TranslationDomain=osso-addressbook

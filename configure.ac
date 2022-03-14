@@ -13,6 +13,9 @@ AM_PROG_CC_C_O
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 
+AM_GCONF_SOURCE_2
+AC_PATH_PROG(GCONFTOOL, gconftool-2)
+
 PKG_PROG_PKG_CONFIG([0.28])
 
 PKG_CHECK_MODULES(
@@ -25,6 +28,21 @@ PKG_CHECK_MODULES(
 	hildon-1
 	dbus-1
 	hildon-fm-2)
+
+desktopentrydir=`$PKG_CONFIG osso-af-settings --variable=desktopentrydir`
+serviceentrydir=`$PKG_CONFIG dbus-glib-1 --variable=prefix`/share/dbus-1/services
+backupsettingsdir=/etc/osso-backup/applications
+prebackupdir=/etc/osso-backup/pre-backup.d/
+restoredir=/etc/osso-backup/restore.d/always/
+ossocudscriptsdir=/etc/osso-cud-scripts
+
+# Define as variables in Makefiles
+AC_SUBST(desktopentrydir)
+AC_SUBST(serviceentrydir)
+AC_SUBST(backupsettingsdir)
+AC_SUBST(prebackupdir)
+AC_SUBST(restoredir)
+AC_SUBST(ossocudscriptsdir)
 
 AC_ARG_ENABLE(debug,        [  --enable-debug           compile with DEBUG],,enable_debug=no)
 
@@ -52,5 +70,7 @@ fi
 AC_OUTPUT([
 	Makefile
 	src/Makefile
+	data/Makefile
+	data/com.nokia.osso_addressbook.service
 ])
 

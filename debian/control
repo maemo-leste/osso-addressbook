@@ -1,0 +1,25 @@
+Source: osso-addressbook
+Section: comm
+Priority: optional
+Build-Depends:
+ debhelper-compat (= 10),
+ libmodest-dbus-client-dev (>= 3.2.4),
+ libosso-abook-dev,
+ maemo-launcher-dev,
+ osso-af-settings
+Maintainer: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
+
+Package: osso-addressbook
+Architecture: any
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ ${launcher:Depends},
+# evolution-data-server-addressbook-backend-sim,
+ evolution-data-server-addressbook-backend-telepathy,
+ hildon-libs-l10n-mr | hildon-libs-l10n-mr0,
+ ke-recv-l10n-mr | ke-recv-l10n-mr0,
+ osso-addressbook-l10n-mr0 | osso-addressbook-l10n-mar
+Description: OSSO Addressbook
+ OSSO Addressbook is a presence-aware addressbook to be used in on the Maemo
+ platform
