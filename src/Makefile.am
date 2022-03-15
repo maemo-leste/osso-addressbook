@@ -11,6 +11,7 @@ osso_addressbook_LDFLAGS = \
 
 osso_addressbook_SOURCES = \
 			hw.c \
+			utils.c \
 			sim.c \
 			importer.c \
 			service.c \
