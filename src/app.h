@@ -50,7 +50,7 @@ typedef struct
   int contacts_mode;
   OssoABookRecentView *recent_view;
   GtkWidget *live_search;
-  int gap3C;
+  GtkWidget *delete_live_search;
   int field_40;
   GtkWidget *field_44;
   gboolean dialog_open;
@@ -75,8 +75,8 @@ typedef struct
   OssoABookGroup *sim_group;
   int gap98;
   int field_9C;
-  int field_A0;
-  int field_A4;
+  GtkWidget *delete_contacts_window;
+  GtkWidget *delete_contact_view;
   GtkWidget *align;
   guint one_day_timer_id;
   gboolean quit_on_close;
@@ -113,6 +113,9 @@ create_menu(osso_abook_data *data, OssoABookMenuEntry *entries,
             int entries_count, OssoABookContact *contact);
 const char *
 _get_vcard_field_from_uri(const gchar *uri);
+
+GtkWidget *
+_setup_live_search(HildonWindow *parent, OssoABookTreeView *tree_view);
 
 #define IS_EMPTY(s) (!((s) && (((const char *)(s))[0])))
 

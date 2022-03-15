@@ -507,8 +507,8 @@ static void
 view_settings_cb(GtkWidget *button, osso_abook_data *data)
 {
   EBook *book = osso_abook_roster_get_book(data->aggregator);
-  GtkWidget *dialog = osso_abook_settings_dialog_new(GTK_WINDOW(data->window),
-                                                     book);
+  GtkWidget *dialog;
 
+  dialog = osso_abook_settings_dialog_new(GTK_WINDOW(data->window), book);
   run_dialog_async(data, GTK_DIALOG(dialog));
 }

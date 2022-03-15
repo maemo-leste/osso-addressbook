@@ -1,7 +1,14 @@
 bin_PROGRAMS = osso-addressbook
 
-osso_addressbook_CFLAGS = $(OSSO_ABOOK_CFLAGS) -DOSSO_ABOOK_DEBUG
-osso_addressbook_LDFLAGS = $(OSSO_ABOOK_LIBS)
+osso_addressbook_CFLAGS = \
+			$(OSSO_ABOOK_CFLAGS) \
+			-DOSSO_ABOOK_DEBUG \
+			$(MAEMO_LAUNCHER_CFLAGS)
+
+osso_addressbook_LDFLAGS = \
+			$(OSSO_ABOOK_LIBS) \
+			-Wl,--as-needed $(MAEMO_LAUNCHER_LDFLAGS)
+
 osso_addressbook_SOURCES = \
 			hw.c \
 			sim.c \
