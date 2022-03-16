@@ -371,8 +371,8 @@ window_delete_event_cb(GtkWidget *widget, GdkEvent *event,
   if (data->recent_view)
     osso_abook_recent_view_hide_live_search(data->recent_view);
 
-  data->field_B8 = TRUE;
-  data->field_B4 = TRUE;
+  data->recent_view_scroll_once = TRUE;
+  data->contact_view_scroll_once = TRUE;
 
   return TRUE;
 }
@@ -1026,8 +1026,8 @@ sim_group_ready_cb(OssoABookWaitable *waitable, const GError *error,
 static void
 live_search_data_free(live_search_data *data)
 {
-  if (data->field_10)
-    g_source_remove(data->field_10);
+  if (data->idle_scroll_id)
+    g_source_remove(data->idle_scroll_id);
 
   g_signal_handlers_disconnect_by_data(data->live_search, data);
   g_signal_handlers_disconnect_by_data(data->tree_view, data);
@@ -1070,7 +1070,7 @@ row_tapped_cb(GtkTreeView *tree_view, GtkTreePath *treepath,
   if (rect_h > 0.0)
     rect_y = rect_y / rect_h;
 
-  data->field_C = rect_y;
+  data->row_align = rect_y;
 }
 
 
@@ -1080,7 +1080,7 @@ live_search_scroll(live_search_data *data)
   GtkTreeView *tv;
   GtkTreePath *treepath;
 
-  data->field_10 = 0;
+  data->idle_scroll_id = 0;
   tv = osso_abook_tree_view_get_tree_view(data->tree_view);
   g_signal_handlers_disconnect_matched(tv,
                                        G_SIGNAL_MATCH_DATA|G_SIGNAL_MATCH_FUNC,
@@ -1092,7 +1092,7 @@ live_search_scroll(live_search_data *data)
     if (treepath)
     {
       tv = osso_abook_tree_view_get_tree_view(data->tree_view);
-      gtk_tree_view_scroll_to_cell(tv, treepath, 0, 1, data->field_C, 0.0);
+      gtk_tree_view_scroll_to_cell(tv, treepath, 0, 1, data->row_align, 0.0);
       gtk_tree_path_free(treepath);
     }
   }
@@ -1118,8 +1118,8 @@ live_search_show_cb(int unused, live_search_data *data)
 static void
 live_search_hide_cb(int unused, live_search_data *data)
 {
-  if (!data->field_10)
-    data->field_10 = g_idle_add((GSourceFunc)live_search_scroll, data);
+  if (!data->idle_scroll_id)
+    data->idle_scroll_id = g_idle_add((GSourceFunc)live_search_scroll, data);
 }
 
 GtkWidget *

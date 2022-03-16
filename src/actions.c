@@ -274,52 +274,53 @@ contact_request_authorization_cb(GtkWidget *button, osso_abook_data *data)
 RTComElQuery *
 create_communication_history_query(OssoABookContact *contact, RTComEl *rtcomel)
 {
-  RTComElQuery *query;
-  const char *uid, *bound_name;
-  GList *contact_list;
-  OssoABookContact *contact_internal;
-  TpAccount *account; /* McAccount *account */
+  RTComElQuery *query = rtcom_el_query_new(rtcomel);
+  gboolean prepared = FALSE;
+  const char *uid;
 
-  query = rtcom_el_query_new(rtcomel);
   rtcom_el_query_set_group_by(query, RTCOM_EL_QUERY_GROUP_BY_NONE);
   uid = e_contact_get_const(E_CONTACT(contact), E_CONTACT_UID);
 
   if (osso_abook_is_temporary_uid(uid))
   {
-    contact_list = osso_abook_contact_get_roster_contacts(contact);
-    if (contact_list)
-    {
-      contact_internal = contact_list->data;
-      g_list_free(contact_list);
-      if ( contact_internal )
-      {
-        account = osso_abook_contact_get_account(contact_internal);
-        bound_name = osso_abook_contact_get_bound_name(contact_internal);
+    GList *roster_contacts = osso_abook_contact_get_roster_contacts(contact);
 
-        if (!rtcom_el_query_prepare(
+    if (roster_contacts)
+    {
+      OssoABookContact *rc = roster_contacts->data;
+
+      g_list_free(roster_contacts);
+
+      if (rc)
+      {
+        TpAccount *account = osso_abook_contact_get_account(rc);
+        const char *bound_name =
+            osso_abook_contact_get_bound_name(rc);
+
+        prepared = rtcom_el_query_prepare(
               query,
               "local-uid", tp_account_get_path_suffix(account), NULL,
               "remote-uid", bound_name, NULL,
-              NULL))
-        {
-          goto fail;
-        }
+              NULL);
       }
     }
 
     g_warn_if_reached();
-    goto fail;
+  }
+  else
+  {
+    prepared = rtcom_el_query_prepare(
+          query, "remote-ebook-uid", uid, NULL, NULL);
   }
 
-  if (!rtcom_el_query_prepare(query, "remote-ebook-uid", uid, NULL, NULL));
-    goto fail;
+  if (!prepared)
+  {
+    g_warning("error preparing communication history query");
+    g_object_unref(query);
+    query = NULL;
+  }
 
   return query;
-
-fail:
-  g_warning("error preparing communication history query");
-
-  return NULL;
 }
 
 static void
@@ -330,7 +331,6 @@ contact_communication_history_cb(GtkWidget *button, osso_abook_data *data)
   RTComEl *eventlogger;
   RTComElQuery *query;
   GtkWidget *logview, *pan, *dialog;
-  GtkObject *tree_model;
 
   g_return_if_fail(data);
 
@@ -366,12 +366,14 @@ contact_communication_history_cb(GtkWidget *button, osso_abook_data *data)
                        dgettext(NULL, "addr_me_communication_history"));
 
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), pan, 1, 1, 0);
+
   if (data->starter_window)
   {
     if (GTK_IS_WINDOW(data->starter_window))
       gtk_window_set_transient_for(GTK_WINDOW(dialog),
                                    GTK_WINDOW(data->starter_window));
   }
+
   gtk_widget_show_all(dialog);
   g_object_unref(rtcom_model);
   g_object_unref(query);

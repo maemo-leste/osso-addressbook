@@ -131,15 +131,15 @@ scroll_to_top_if_needed(osso_abook_data *data)
 {
   if (data->contacts_mode == 1)
   {
-    if (data->field_B8)
+    if (data->recent_view_scroll_once)
     {
       osso_abook_recent_view_scroll_to_top(data->recent_view);
-      data->field_B8 = FALSE;
+      data->recent_view_scroll_once = FALSE;
     }
   }
   else if (data->contacts_mode == 0)
   {
-    if (data->field_B4)
+    if (data->contact_view_scroll_once)
     {
       GtkWidget *area = osso_abook_tree_view_get_pannable_area(
           OSSO_ABOOK_TREE_VIEW(data->contact_view));
@@ -147,7 +147,7 @@ scroll_to_top_if_needed(osso_abook_data *data)
       if (gtk_widget_get_realized(area))
         hildon_pannable_area_jump_to(HILDON_PANNABLE_AREA(area), -1, 0);
 
-      data->field_B4 = FALSE;
+      data->contact_view_scroll_once = FALSE;
     }
   }
 }

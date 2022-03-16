@@ -80,8 +80,8 @@ typedef struct
   GtkWidget *align;
   guint one_day_timer_id;
   gboolean quit_on_close;
-  gboolean field_B4;
-  gboolean field_B8;
+  gboolean contact_view_scroll_once;
+  gboolean recent_view_scroll_once;
 } osso_abook_data;
 
 typedef struct
@@ -89,8 +89,8 @@ typedef struct
   GtkWidget *live_search;
   OssoABookTreeView *tree_view;
   GtkTreeRowReference *row_ref;
-  float field_C;
-  int field_10;
+  float row_align;
+  guint idle_scroll_id;
 } live_search_data;
 
 #define STARTUP_PROGRESS_SEPARATOR "====================================================================="
