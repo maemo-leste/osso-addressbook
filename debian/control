@@ -6,7 +6,8 @@ Build-Depends:
  libmodest-dbus-client-dev (>= 3.2.4),
  libosso-abook-dev,
  maemo-launcher-dev,
- osso-af-settings
+ osso-af-settings,
+ librtcom-eventlogger-ui-dev
 Maintainer: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
 
 Package: osso-addressbook
