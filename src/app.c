@@ -874,7 +874,7 @@ contact_view_contact_activated_cb(OssoABookContactView *view,
                                   osso_abook_data *user_data)
 {
   if (user_data->stacked_group)
-    g_idle_add((GSourceFunc)widget_hide_idle_cb, user_data->field_44);
+    g_idle_add((GSourceFunc)widget_hide_idle_cb, user_data->widget1);
 
   g_idle_add((GSourceFunc)widget_hide_idle_cb, user_data->live_search);
   create_menu(user_data, contact_menu_actions,
