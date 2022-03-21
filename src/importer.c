@@ -28,6 +28,8 @@
 
 #include "importer.h"
 
+#define FILES_PER_BATCH 20
+
 typedef enum
 {
   IMPORT_START,
@@ -470,18 +472,106 @@ void
 do_import(GtkWindow *parent, const char *uri, GSourceFunc import_finished_cb,
           gpointer user_data)
 {
-  import_file_data *data;
+  import_file_data *ifd;
 
   g_return_if_fail(uri);
 
-  data = import_file_start(parent, import_finished_cb, user_data);
-  data->files = g_list_prepend(NULL, g_file_new_for_uri(uri));
-  gdk_threads_add_idle(state_selector, data);
+  ifd = import_file_start(parent, import_finished_cb, user_data);
+  ifd->files = g_list_prepend(NULL, g_file_new_for_uri(uri));
+  gdk_threads_add_idle(state_selector, ifd);
+}
+
+static void
+enumerator_next_files_cb(GObject *source_object, GAsyncResult *res,
+                         gpointer user_data)
+{
+  import_file_data *ifd = user_data;
+  GFileEnumerator *enumerator = G_FILE_ENUMERATOR(source_object);
+  GList *infos;
+
+  infos = g_file_enumerator_next_files_finish(enumerator, res, &ifd->error);
+
+  if (infos)
+  {
+    while (infos)
+    {
+      GFileInfo *info = infos->data;
+
+      if (is_vcard_or_directory(info))
+      {
+        GFile *container = g_file_enumerator_get_container(enumerator);
+        const char *name = g_file_info_get_name(info);
+
+        ifd->files = g_list_prepend(ifd->files,
+                                    g_file_get_child(container, name));
+      }
+
+      infos = g_list_delete_link(infos, infos);
+      g_object_unref(info);
+    }
+
+    g_file_enumerator_next_files_async(enumerator, FILES_PER_BATCH, 0,
+                                       ifd->cancellable,
+                                       enumerator_next_files_cb, ifd);
+  }
+  else if (ifd->error)
+  {
+    if (ifd->files)
+    {
+      ifd->error_message = dgettext(NULL, "addr_ni_importing_fail");
+      gdk_threads_add_idle(state_selector, ifd);
+    }
+    else
+    {
+      hildon_banner_show_information(GTK_WIDGET(ifd->parent), NULL,
+                                     dgettext(NULL, "addr_ni_importing_fail"));
+      import_file_data_free(ifd);
+    }
+  }
+  else
+    gdk_threads_add_idle(state_selector, ifd);
+}
+
+static void
+enumerate_children_cb(GObject *source_object, GAsyncResult *res,
+                      gpointer user_data)
+{
+  import_file_data *ifd = user_data;
+  GFileEnumerator *enumerator;
+
+  enumerator = g_file_enumerate_children_finish(G_FILE(source_object),
+                                                res, &ifd->error);
+
+  if (enumerator)
+  {
+    g_file_enumerator_next_files_async(enumerator, FILES_PER_BATCH, 0,
+                                       ifd->cancellable,
+                                       enumerator_next_files_cb, ifd);
+    g_object_unref(enumerator);
+  }
+  else
+  {
+    hildon_banner_show_information(GTK_WIDGET(ifd->parent), NULL,
+                                   dgettext(NULL, "addr_ni_importing_fail"));
+    import_file_data_free(ifd);
+  }
 }
 
 void
 do_import_dir(GtkWindow *parent, const gchar *uri,
               GSourceFunc import_finished_cb, gpointer user_data)
 {
-  g_assert(0 && "implement me");
+  import_file_data *ifd;
+  GFile *file;
+
+  g_return_if_fail(uri);
+
+  ifd = import_file_start(parent, import_finished_cb, user_data);
+  file = g_file_new_for_uri(uri);
+
+  g_file_enumerate_children_async(file, G_FILE_ATTRIBUTE_STANDARD_NAME
+                                  "," G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE,
+                                  G_FILE_QUERY_INFO_NONE, 0, ifd->cancellable,
+                                  enumerate_children_cb, ifd);
+  g_object_unref(file);
 }
