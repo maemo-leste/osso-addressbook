@@ -22,6 +22,7 @@
 #include <libosso-abook/osso-abook-contact-chooser.h>
 #include <libosso-abook/osso-abook-init.h>
 #include <libosso-abook/osso-abook-log.h>
+#include <libosso-abook/osso-abook-service-group.h>
 #include <libosso-abook/osso-abook-temporary-contact-dialog.h>
 #include <libosso-abook/osso-abook-waitable.h>
 
@@ -406,6 +407,93 @@ aggregator_ready_cb(OssoABookWaitable *waitable, const GError *error,
   dbus_message_unref(reply);
 }
 
+
+static DBusMessage *
+open_group(DBusMessage *message, osso_abook_data *data)
+{
+#if 0
+  char *requested_protocol = NULL;
+  gchar *requested_group = NULL;
+  dbus_bool_t select_account = FALSE;
+  OssoABookGroup *group = NULL;
+  DBusError error;
+
+  dbus_error_init(&error);
+
+  if (!dbus_message_get_args(message, &error,
+                             DBUS_TYPE_STRING, &requested_group,
+                             DBUS_TYPE_STRING, &requested_protocol,
+                             DBUS_TYPE_BOOLEAN, &select_account,
+                             DBUS_TYPE_INVALID))
+  {
+    return dbus_message_new_error(message, error.name, error.message);
+  }
+
+  if (!IS_EMPTY(requested_group))
+    group = osso_abook_service_group_lookup_by_name(requested_group);
+
+  if (!group && !IS_EMPTY(requested_protocol))
+  {
+    GSList *l;
+
+    for (l = data->service_groups; l; l = l->next)
+    {
+      if (l->data && OSSO_ABOOK_IS_SERVICE_GROUP(l->data))
+      {
+        TpAccount *account = osso_abook_service_group_get_account(
+            OSSO_ABOOK_SERVICE_GROUP(l->data));
+
+        if (account)
+        {
+          if (!strcmp(tp_account_get_protocol_name(account),
+                      requested_protocol))
+          {
+            group = l->data;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  if (group)
+  {
+    app_show(data);
+    switch_to_group_subview(data, group);
+  }
+  else if (select_account)
+  {
+    GtkWidget *parent;
+    GList *accounts = NULL;
+    AuicClient *auic;
+
+    app_show(data);
+    parent = hildon_window_stack_peek(hildon_window_stack_get_default());
+
+    if (!IS_EMPTY(requested_protocol))
+    {
+      accounts = osso_abook_account_manager_list_by_protocol(
+          NULL, requested_protocol);
+    }
+
+    auic = auic_client_new(GTK_WINDOW(parent));
+
+    if (!IS_EMPTY(requested_protocol) && !accounts)
+      auic_client_open_new_account(auic, requested_protocol);
+    else
+      auic_client_open_accounts_list(auic);
+
+    g_list_free(accounts);
+    g_object_unref(auic);
+  }
+#else
+  /* FIXME finish it */
+  g_assert(0);
+#endif
+
+  return dbus_message_new_method_return(message);
+}
+
 static DBusHandlerResult
 message_filter(DBusConnection *connection, DBusMessage *message,
                gpointer user_data)
@@ -470,160 +558,8 @@ message_filter(DBusConnection *connection, DBusMessage *message,
   }
   else if (member_quark == search_append_quark)
     reply = search_append(message, data);
-
-#if 0
   else if (member_quark == open_group_quark)
-  {
-    s = 0;
-    unique_name = 0;
-    v70 = 0;
-    dbus_error_init(&error);
-
-    if (dbus_message_get_args(message, &error, 's', &unique_name, 's', &s, 'b',
-                              &v70, 0))
-    {
-      if (unique_name)
-      {
-        if (*unique_name)
-        {
-          v16 = osso_abook_service_group_lookup_by_name(unique_name);
-
-          if (v16)
-            goto LABEL_55;
-        }
-      }
-
-      if (!s)
-        goto LABEL_69;
-
-      if (!*s)
-        goto LABEL_69;
-
-      v14 = data->service_groups;
-
-      if (!v14)
-        goto LABEL_69;
-
-      v15 = (GTypeInstance *)v14->data;
-
-      if (!v14->data)
-        goto LABEL_69;
-
-      v16 = 0;
-      v17 = osso_abook_group_get_type();
-
-      do
-      {
-        v19 = g_type_check_instance_cast(v15, v17);
-
-        if (v19)
-        {
-          v20 = osso_abook_service_group_get_type();
-
-          if (v19->parent_instance.g_type_instance.g_class
-              && (v19->parent_instance.g_type_instance.g_class->g_type == v20)
-              || g_type_check_instance_is_a(&v19->parent_instance.
-                                            g_type_instance, v20))
-          {
-            v22 = g_type_check_instance_cast(
-                &v19->parent_instance.g_type_instance,
-                v20);
-            v23 = osso_abook_service_group_get_account(
-                (OssoABookServiceGroup *)v22);
-
-            if (v23)
-            {
-              if (v23->name)
-              {
-                v24 = mc_account_compat_get_profile(v23);
-
-                if (!strcmp(v24, s))
-                  v16 = (OssoABookGroup *)v19;
-              }
-            }
-          }
-        }
-
-        v14 = v14->next;
-
-        if (!v14)
-          break;
-
-        v15 = (GTypeInstance *)v14->data;
-        v18 = (int)v14->data;
-
-        if (v14->data)
-          v18 = 1;
-
-        if (v16)
-          v18 = 0;
-      }
-      while (v18);
-
-      if (v16)
-      {
-LABEL_55:
-        j_app_show(data);
-        j_switch_to_group_subview((int)data, v16);
-      }
-      else
-      {
-LABEL_69:
-
-        if (v70)
-        {
-          j_app_show(data);
-
-          if (v70)
-          {
-            v48 = hildon_window_stack_get_default();
-            v49 = hildon_window_stack_peek(v48);
-            v50 = s;
-            v51 = &v49->object.parent_instance.g_type_instance;
-
-            if (s && *s)
-            {
-              v58 = osso_abook_account_manager_get_default();
-              v52 = osso_abook_account_manager_list_by_profile(v58, v50);
-            }
-            else
-            {
-              v52 = 0;
-            }
-
-            v53 = gtk_window_get_type();
-            v54 = (GtkWindow *)g_type_check_instance_cast(v51, v53);
-            v55 = auic_client_new(v54);
-
-            if (!s)
-              goto LABEL_80;
-
-            v57 = *(unsigned __int8 *)s;
-
-            if (*s)
-              v57 = 1;
-
-            if (v52)
-              v57 = 0;
-
-            if (v57)
-              auic_client_open_new_account(v55, s);
-            else
-LABEL_80:
-              auic_client_open_accounts_list(v55);
-
-            g_list_free(v52);
-            g_object_unref(v55);
-          }
-        }
-      }
-
-      goto LABEL_56;
-    }
-
-    goto err_out;
-  }
-#endif
+    reply = open_group(message, data);
   else
   {
     reply = dbus_message_new_error(message, DBUS_ERROR_UNKNOWN_METHOD,
