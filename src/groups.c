@@ -20,11 +20,12 @@
 #include "config.h"
 
 #include <hildon/hildon.h>
-#include <libosso-abook/osso-abook-util.h>
 #include <libosso-abook/osso-abook-service-group.h>
+#include <libosso-abook/osso-abook-util.h>
 
 #include <libintl.h>
 
+#include "actions.h"
 #include "app.h"
 #include "groups.h"
 #include "menu.h"
@@ -40,7 +41,13 @@ static void
 view_specific_group_cb(GtkWidget *groups_window_child,
                        struct view_specific_group_cb_data *cb_data)
 {
-  g_assert(0);
+  g_return_if_fail(cb_data);
+  g_return_if_fail(!groups_window_child || GTK_IS_WIDGET(groups_window_child));
+
+  view_group_subview(cb_data->data, cb_data->group);
+
+  if (groups_window_child)
+    gtk_widget_destroy(gtk_widget_get_toplevel(groups_window_child));
 }
 
 static void
@@ -49,7 +56,6 @@ attach_to_table(GtkTable *table, osso_abook_data *data, OssoABookGroup *group,
 {
   int top_attach = attach / 2;
   struct view_specific_group_cb_data *cb_data;
-
 
   if (data->sim_group_ready)
     top_attach++;
@@ -140,17 +146,17 @@ add_service_groups(GtkTable *table, osso_abook_data *data, int *attach)
         TpProtocol *protocol =
           osso_abook_account_manager_get_protocol_object(
             NULL, tp_account_get_protocol_name(account));
-        gchar *title = g_strdup_printf(dgettext(NULL, "addr_va_groups_imgrp"),
+        const char *id = dgettext(NULL, "addr_va_groups_imgrp");
+        gchar *title = g_strdup_printf(id,
                                        tp_account_get_display_name(account));
         GtkWidget *button;
         GtkWidget *image;
 
         if (IS_EMPTY(title))
         {
+          id = dgettext(NULL, "addr_va_groups_imgrp");
           g_free(title);
-          title = g_strdup_printf(
-              dgettext(NULL, "addr_va_groups_imgrp"),
-              tp_protocol_get_english_name(protocol));
+          title = g_strdup_printf(id, tp_protocol_get_english_name(protocol));
         }
 
         if (GPOINTER_TO_INT(g_hash_table_lookup(hash_table, protocol)) < 2)

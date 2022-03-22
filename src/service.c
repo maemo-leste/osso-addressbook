@@ -411,7 +411,6 @@ aggregator_ready_cb(OssoABookWaitable *waitable, const GError *error,
 static DBusMessage *
 open_group(DBusMessage *message, osso_abook_data *data)
 {
-#if 0
   char *requested_protocol = NULL;
   gchar *requested_group = NULL;
   dbus_bool_t select_account = FALSE;
@@ -463,6 +462,7 @@ open_group(DBusMessage *message, osso_abook_data *data)
   }
   else if (select_account)
   {
+#if 0
     GtkWidget *parent;
     GList *accounts = NULL;
     AuicClient *auic;
@@ -485,11 +485,11 @@ open_group(DBusMessage *message, osso_abook_data *data)
 
     g_list_free(accounts);
     g_object_unref(auic);
-  }
 #else
   /* FIXME finish it */
   g_assert(0);
 #endif
+  }
 
   return dbus_message_new_method_return(message);
 }

@@ -81,4 +81,13 @@ view_groups_cb(GtkWidget *button, osso_abook_data *data);
 static void
 view_settings_cb(GtkWidget *button, osso_abook_data *data);
 
+static void
+im_launch_account_cpa_cb(GtkWidget *button, osso_abook_data *data);
+
+void
+switch_to_group_subview(osso_abook_data *data, OssoABookGroup *group);
+
+void
+view_group_subview(osso_abook_data *data, OssoABookGroup *group);
+
 #endif // ACTIONS_H

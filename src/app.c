@@ -63,7 +63,7 @@ roster_created_cb(OssoABookRosterManager *manager, OssoABookRoster *roster,
   OssoABookGroup *group = osso_abook_service_group_get(account);
 
   g_return_if_fail(NULL != group);
-  g_return_if_fail(NULL == g_slist_find (data->service_groups, group));
+  g_return_if_fail(NULL == g_slist_find(data->service_groups, group));
 
   data->service_groups = g_slist_insert_sorted(
         data->service_groups, group, _compare_service_group);
@@ -103,7 +103,7 @@ one_day_expired_cb(gpointer data)
   return FALSE;
 }
 
-static void
+void
 app_select_all_group(osso_abook_data *data)
 {
   OssoABookGroup *group = osso_abook_all_group_get();
@@ -583,13 +583,6 @@ window_realize_cb(GtkWidget *widget, gpointer user_data)
   }
 }
 
-static gboolean
-widget_hide_idle_cb(GtkWidget *widget)
-{
-  gtk_widget_hide(widget);
-  return FALSE;
-}
-
 static void
 starter_window_destroy_cb(int unused, osso_abook_data *data)
 {
@@ -868,16 +861,27 @@ create_menu(osso_abook_data *data, OssoABookMenuEntry *entries,
   gtk_widget_show(data->starter_window);
 }
 
-static void
+static gboolean
+widget_hide_idle_cb(gpointer widget)
+{
+  gtk_widget_hide(widget);
+  return FALSE;
+}
+
+void
 contact_view_contact_activated_cb(OssoABookContactView *view,
                                   OssoABookContact *master_contact,
-                                  osso_abook_data *user_data)
+                                  osso_abook_data *data)
 {
-  if (user_data->stacked_group)
-    g_idle_add((GSourceFunc)widget_hide_idle_cb, user_data->widget1);
+  if (data->stacked_group)
+  {
+    g_idle_add_full(G_PRIORITY_HIGH, widget_hide_idle_cb,
+                    data->group_live_search, NULL);
+  }
 
-  g_idle_add((GSourceFunc)widget_hide_idle_cb, user_data->live_search);
-  create_menu(user_data, contact_menu_actions,
+  g_idle_add_full(G_PRIORITY_HIGH, widget_hide_idle_cb,
+                  data->live_search, NULL);
+  create_menu(data, contact_menu_actions,
               G_N_ELEMENTS(contact_menu_actions), master_contact);
 }
 
@@ -921,7 +925,7 @@ sim_import_contact_as_voicemail(OssoABookContact *contact, const char *imsi)
 
   for (l = g_list_last(attrs); l; l = l->prev)
   {
-    if (!g_strcmp0(e_vcard_attribute_get_name(l->data), EVC_TEL))
+    if (!g_strcmp0(e_vcard_attribute_get_name(l->data), "tel"))
     {
       GList *v = e_vcard_attribute_get_values(l->data);
 

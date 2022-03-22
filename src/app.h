@@ -51,7 +51,7 @@ typedef struct
   OssoABookRecentView *recent_view;
   GtkWidget *live_search;
   GtkWidget *delete_live_search;
-  GtkWidget *widget1;
+  GtkWidget *group_live_search;
   gboolean dialog_open;
   osso_context_t *osso;
   gchar *arg1;
@@ -60,7 +60,10 @@ typedef struct
   gulong sequence_complete_id;
   GtkWidget *groups_area;
   GtkWidget *starter_window;
-  GtkWidget *stacked_group;
+  OssoABookGroup *stacked_group;
+  gulong group_notify_id;
+  gulong account_removed_id;
+  HildonStackableWindow *group_window;
   OssoABookPluginManager *plugin_manager;
   gboolean show_ui;
   gboolean startup_complete;
@@ -109,6 +112,14 @@ _get_vcard_field_from_uri(const gchar *uri);
 
 GtkWidget *
 _setup_live_search(HildonWindow *parent, OssoABookTreeView *tree_view);
+
+void
+contact_view_contact_activated_cb(OssoABookContactView *view,
+                                  OssoABookContact *master_contact,
+                                  osso_abook_data *data);
+
+void
+app_select_all_group(osso_abook_data *data);
 
 #define IS_EMPTY(s) (!((s) && (((const char *)(s))[0])))
 

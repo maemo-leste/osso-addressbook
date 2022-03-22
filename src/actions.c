@@ -21,14 +21,18 @@
 
 #include <libosso-abook/osso-abook-aggregator.h>
 #include <libosso-abook/osso-abook-contact-editor.h>
+#include <libosso-abook/osso-abook-contact-view.h>
+#include <libosso-abook/osso-abook-dialogs.h>
 #include <libosso-abook/osso-abook-errors.h>
+#include <libosso-abook/osso-abook-log.h>
+#include <libosso-abook/osso-abook-mecard-view.h>
+#include <libosso-abook/osso-abook-recent-group.h>
+#include <libosso-abook/osso-abook-self-contact.h>
+#include <libosso-abook/osso-abook-send-contacts.h>
+#include <libosso-abook/osso-abook-service-group.h>
+#include <libosso-abook/osso-abook-settings-dialog.h>
 #include <libosso-abook/osso-abook-touch-contact-starter.h>
 #include <libosso-abook/osso-abook-util.h>
-#include <libosso-abook/osso-abook-dialogs.h>
-#include <libosso-abook/osso-abook-send-contacts.h>
-#include <libosso-abook/osso-abook-self-contact.h>
-#include <libosso-abook/osso-abook-mecard-view.h>
-#include <libosso-abook/osso-abook-settings-dialog.h>
 
 #include <rtcom-eventlogger-ui/rtcom-log-model.h>
 #include <rtcom-eventlogger-ui/rtcom-log-view.h>
@@ -39,9 +43,9 @@
 
 #include "actions.h"
 #include "contacts.h"
-#include "sim.h"
-#include "menu.h"
 #include "groups.h"
+#include "menu.h"
+#include "sim.h"
 
 OssoABookMenuEntry sim_bt_menu_actions[BT_MENU_COUNT] =
 {
@@ -100,6 +104,12 @@ OssoABookMenuEntry main_menu_actions[MAIN_MENU_COUNT] =
     G_CALLBACK(view_settings_cb), NULL }
 };
 
+static OssoABookMenuEntry accounts_menu_actions[] =
+{
+  { "addr_me_accounts", 0, 0,
+    G_CALLBACK(im_launch_account_cpa_cb), NULL }
+};
+
 gboolean
 contact_saved_cb(GtkWidget *editor, const char *uid, osso_abook_data *data)
 {
@@ -114,7 +124,7 @@ contact_starter_edit_cb(GtkWidget *button, osso_abook_data *data)
 
   starter = g_object_get_data(G_OBJECT(data->starter_window), "starter");
   osso_abook_touch_contact_starter_start_editor(
-      OSSO_ABOOK_TOUCH_CONTACT_STARTER(starter));
+    OSSO_ABOOK_TOUCH_CONTACT_STARTER(starter));
 }
 
 OssoABookContact *
@@ -126,11 +136,12 @@ get_starter_contact(osso_abook_data *data)
     return NULL;
 
   starter = g_object_get_data(G_OBJECT(data->starter_window), "starter");
+
   if (!starter)
     return NULL;
 
   return osso_abook_touch_contact_starter_get_contact(
-      OSSO_ABOOK_TOUCH_CONTACT_STARTER(starter));
+           OSSO_ABOOK_TOUCH_CONTACT_STARTER(starter));
 }
 
 static gint
@@ -157,7 +168,7 @@ contact_send_card_cb(GtkWidget *button, osso_abook_data *data)
     contact = get_starter_contact(data);
     /* TODO: Missing func in libosso-abook */
     dialog = osso_abook_send_contacts_dialog_new(
-                 GTK_WINDOW(data->starter_window), contact, FALSE);
+        GTK_WINDOW(data->starter_window), contact, FALSE);
     run_dialog(data, GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
   }
@@ -231,8 +242,10 @@ contact_create_shortcut_cb(GtkWidget *button, osso_abook_data *data)
   }
 
   if (osso_abook_contact_shortcut_create(contact))
+  {
     hildon_banner_show_information(data->starter_window, 0,
-        dgettext(NULL, "addr_ib_shortcut_created"));
+                                   dgettext(NULL, "addr_ib_shortcut_created"));
+  }
 }
 
 static void
@@ -241,6 +254,7 @@ contact_request_authorization_cb(GtkWidget *button, osso_abook_data *data)
   OssoABookContact *master_contact, *contact;
   GList *contact_list;
   const char *display_name;
+  const char *msgid;
   gchar *info;
 
   master_contact = get_starter_contact(data);
@@ -264,9 +278,10 @@ contact_request_authorization_cb(GtkWidget *button, osso_abook_data *data)
     }
     while (contact_list);
   }
+
   display_name = osso_abook_contact_get_display_name(master_contact);
-  info = g_strdup_printf(dgettext(NULL, "addr_ib_request_author_resend"),
-                         display_name);
+  msgid = dgettext(NULL, "addr_ib_request_author_resend");
+  info = g_strdup_printf(msgid, display_name);
   hildon_banner_show_information(data->starter_window, 0, info);
   g_free(info);
 }
@@ -295,13 +310,13 @@ create_communication_history_query(OssoABookContact *contact, RTComEl *rtcomel)
       {
         TpAccount *account = osso_abook_contact_get_account(rc);
         const char *bound_name =
-            osso_abook_contact_get_bound_name(rc);
+          osso_abook_contact_get_bound_name(rc);
 
         prepared = rtcom_el_query_prepare(
-              query,
-              "local-uid", tp_account_get_path_suffix(account), NULL,
-              "remote-uid", bound_name, NULL,
-              NULL);
+            query,
+            "local-uid", tp_account_get_path_suffix(account), NULL,
+            "remote-uid", bound_name, NULL,
+            NULL);
       }
     }
 
@@ -310,7 +325,7 @@ create_communication_history_query(OssoABookContact *contact, RTComEl *rtcomel)
   else
   {
     prepared = rtcom_el_query_prepare(
-          query, "remote-ebook-uid", uid, NULL, NULL);
+        query, "remote-ebook-uid", uid, NULL, NULL);
   }
 
   if (!prepared)
@@ -387,7 +402,8 @@ import_selected_contact(GtkWidget *button, osso_abook_data *data)
   if (contact)
     sim_import_contact(contact);
   else
-    g_warning("No contact selected, 'copy to contacts' action should be disabled");
+    g_warning(
+      "No contact selected, 'copy to contacts' action should be disabled");
 }
 
 static void
@@ -397,7 +413,7 @@ contact_new_cb(GtkWidget *button, osso_abook_data *data)
 
   gtk_widget_hide(data->live_search);
   editor = osso_abook_contact_editor_new_with_contact(
-        GTK_WINDOW(data->window), NULL, OSSO_ABOOK_CONTACT_EDITOR_CREATE);
+      GTK_WINDOW(data->window), NULL, OSSO_ABOOK_CONTACT_EDITOR_CREATE);
   g_signal_connect(editor, "contact-saved",
                    G_CALLBACK(contact_saved_cb), data);
   run_dialog(data, GTK_DIALOG(editor));
@@ -424,7 +440,8 @@ run_dialog_async(osso_abook_data *data, GtkDialog *dialog)
 
   if (!gtk_window_get_modal(GTK_WINDOW(dialog)))
   {
-    g_warning("Please check why your dialog is not marked as modal. To make this function work it really should. Enforcing this now.");
+    g_warning(
+      "Please check why your dialog is not marked as modal. To make this function work it really should. Enforcing this now.");
     gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
   }
 
@@ -452,12 +469,13 @@ view_mecard_cb(GtkWidget *button, osso_abook_data *data)
   gtk_widget_hide(data->live_search);
   self = osso_abook_self_contact_get_default();
 
-  if (osso_abook_gconf_contact_is_vcard_empty(OSSO_ABOOK_GCONF_CONTACT(self)) ||
+  if (osso_abook_gconf_contact_is_vcard_empty(
+        OSSO_ABOOK_GCONF_CONTACT(self)) ||
       osso_abook_gconf_contact_is_deleted(OSSO_ABOOK_GCONF_CONTACT(self)))
   {
     GtkWidget *editor = osso_abook_contact_editor_new_with_contact(
-          GTK_WINDOW(data->window), OSSO_ABOOK_CONTACT(self),
-          OSSO_ABOOK_CONTACT_EDITOR_CREATE_SELF);
+        GTK_WINDOW(data->window), OSSO_ABOOK_CONTACT(self),
+        OSSO_ABOOK_CONTACT_EDITOR_CREATE_SELF);
 
     g_signal_connect(editor, "contact-saved",
                      G_CALLBACK(gtk_true), NULL);
@@ -513,4 +531,270 @@ view_settings_cb(GtkWidget *button, osso_abook_data *data)
 
   dialog = osso_abook_settings_dialog_new(GTK_WINDOW(data->window), book);
   run_dialog_async(data, GTK_DIALOG(dialog));
+}
+
+static void
+group_notify_name_cb(OssoABookGroup *group, GParamSpec *spec, GtkWindow *parent)
+{
+  gtk_window_set_title(parent, osso_abook_group_get_display_name(group));
+}
+
+static void
+disconnect_account_removed_signal(osso_abook_data *data)
+{
+  if (data->account_removed_id)
+  {
+    g_signal_handler_disconnect(osso_abook_account_manager_get_default(),
+                                data->account_removed_id);
+    data->account_removed_id = 0;
+  }
+}
+
+struct group_data
+{
+  GtkWindow *parent;
+  OssoABookServiceGroup *service_group;
+};
+
+static void
+group_data_destroy(void *data, GClosure *closure)
+{
+  g_free(data);
+}
+
+static void
+account_removed_cb(OssoABookAccountManager *manager, TpAccount *account,
+                   struct group_data *data)
+{
+  if (data->parent &&
+      (osso_abook_service_group_get_account(data->service_group) == account))
+  {
+    gtk_widget_hide(GTK_WIDGET(data->parent));
+  }
+}
+
+static void
+subview_update_contact_view(OssoABookGroup *group, GtkWidget *view,
+                            GtkWindow *parent, OssoABookContactModel *model,
+                            OssoABookFilterModel *filter_model,
+                            osso_abook_data *data)
+{
+  OssoABookListStore *group_model;
+
+  g_return_if_fail(group && OSSO_ABOOK_IS_GROUP(group));
+  g_return_if_fail(view && GTK_IS_WIDGET(view));
+  g_return_if_fail(!OSSO_ABOOK_IS_RECENT_GROUP(group));
+  g_return_if_fail(OSSO_ABOOK_IS_CONTACT_VIEW(view));
+
+  group_model = osso_abook_group_get_model(group);
+
+  if (group_model)
+  {
+    osso_abook_tree_view_set_filter_model(OSSO_ABOOK_TREE_VIEW(view), NULL);
+    osso_abook_tree_view_set_base_model(OSSO_ABOOK_TREE_VIEW(view), group_model);
+  }
+  else
+  {
+    osso_abook_tree_view_set_base_model(OSSO_ABOOK_TREE_VIEW(view),
+                                        OSSO_ABOOK_LIST_STORE(model));
+    osso_abook_tree_view_set_filter_model(OSSO_ABOOK_TREE_VIEW(view),
+                                          filter_model);
+  }
+
+  osso_abook_filter_model_freeze_refilter(filter_model);
+  osso_abook_filter_model_set_text(filter_model, NULL);
+  osso_abook_filter_model_set_group(filter_model, group);
+  osso_abook_filter_model_thaw_refilter(filter_model);
+
+  if (data->group_notify_id)
+    g_signal_handler_disconnect(data->stacked_group, data->group_notify_id);
+
+  data->group_notify_id =
+    g_signal_connect(group, "notify::name",
+                     G_CALLBACK(group_notify_name_cb), parent);
+
+  if (OSSO_ABOOK_IS_SERVICE_GROUP(group))
+  {
+    disconnect_account_removed_signal(data);
+
+    struct group_data *gdata = g_new0(struct group_data, 1);
+
+    gdata->service_group = OSSO_ABOOK_SERVICE_GROUP(group);
+    gdata->parent = parent;
+    data->account_removed_id =
+      g_signal_connect_data(
+        osso_abook_account_manager_get_default(), "account-removed",
+        G_CALLBACK(account_removed_cb), gdata, group_data_destroy, 0);
+  }
+
+  gtk_window_set_title(GTK_WINDOW(parent),
+                       osso_abook_group_get_display_title(group));
+}
+
+static void
+group_window_hide_cb(GtkWidget *window, osso_abook_data *data)
+{
+  if (data->group_notify_id)
+  {
+    g_signal_handler_disconnect(data->stacked_group, data->group_notify_id);
+    data->group_notify_id = 0;
+  }
+
+  disconnect_account_removed_signal(data);
+
+  if (data->group_window)
+  {
+    gtk_widget_destroy(GTK_WIDGET(data->group_window));
+    data->group_window = NULL;
+  }
+
+  app_select_all_group(data);
+  data->stacked_group = 0;
+}
+
+static void
+im_launch_account_cpa_cb(GtkWidget *button, osso_abook_data *data)
+{
+  osso_abook_add_im_account_dialog_run(GTK_WINDOW(data->group_window));
+}
+
+void
+view_group_subview(osso_abook_data *data, OssoABookGroup *group)
+{
+  OssoABookRoster *aggregator;
+  GtkWidget *contact_view;
+  HildonAppMenu *menu;
+  GtkWidget *align;
+  GtkWidget *window;
+  OssoABookContactModel *model;
+  OssoABookFilterModel *filter_model;
+  GError *error = NULL;
+
+  g_return_if_fail(data);
+  g_return_if_fail(group && OSSO_ABOOK_IS_GROUP(group));
+  g_return_if_fail(!data->stacked_group);
+
+  window = hildon_stackable_window_new();
+  data->group_window = HILDON_STACKABLE_WINDOW(window);
+  g_signal_connect(window, "hide",
+                   G_CALLBACK(group_window_hide_cb), data);
+  model = osso_abook_contact_model_new();
+  aggregator = osso_abook_aggregator_get_default(&error);
+
+  if (error)
+  {
+    OSSO_ABOOK_WARN("%s", error->message);
+    g_clear_error(&error);
+  }
+
+  osso_abook_list_store_set_roster(OSSO_ABOOK_LIST_STORE(model), aggregator);
+  filter_model = osso_abook_filter_model_new(OSSO_ABOOK_LIST_STORE(model));
+  contact_view = osso_abook_contact_view_new(HILDON_UI_MODE_NORMAL, model,
+                                             filter_model);
+  g_signal_connect(contact_view, "contact-activated",
+                   G_CALLBACK(contact_view_contact_activated_cb), data);
+
+  if (OSSO_ABOOK_IS_SERVICE_GROUP(group))
+  {
+    TpAccount *account =
+      osso_abook_service_group_get_account(OSSO_ABOOK_SERVICE_GROUP(group));
+
+    osso_abook_tree_view_set_aggregation_account(
+      OSSO_ABOOK_TREE_VIEW(contact_view), account);
+    data->group_live_search = _setup_live_search(
+        HILDON_WINDOW(window), OSSO_ABOOK_TREE_VIEW(contact_view));
+    menu = app_menu_from_menu_entries(NULL, accounts_menu_actions,
+                                      G_N_ELEMENTS(accounts_menu_actions), NULL,
+                                      0, data, NULL);
+
+    if (account)
+    {
+      append_menu_extension_entries(menu, tp_account_get_protocol_name(account),
+                                    GTK_WINDOW(window), NULL, data);
+    }
+  }
+  else
+  {
+    data->group_live_search = _setup_live_search(
+        HILDON_WINDOW(window), OSSO_ABOOK_TREE_VIEW(contact_view));
+    menu = app_menu_from_menu_entries(NULL, accounts_menu_actions,
+                                      G_N_ELEMENTS(accounts_menu_actions), NULL,
+                                      0, data, NULL);
+  }
+
+  hildon_window_set_app_menu(HILDON_WINDOW(window), menu);
+  align = gtk_alignment_new(0.0, 0.0, 1.0, 1.0);
+  gtk_alignment_set_padding(GTK_ALIGNMENT(align), 4, 0, 16, 16);
+  gtk_container_add(GTK_CONTAINER(align), contact_view);
+
+  if (data->live_search)
+    gtk_widget_hide(data->live_search);
+
+  gtk_container_add(GTK_CONTAINER(window), align);
+  data->stacked_group = group;
+
+  subview_update_contact_view(group, contact_view, GTK_WINDOW(window), model,
+                              filter_model, data);
+
+  gtk_widget_show_all(window);
+
+  if (model)
+    g_object_unref(model);
+}
+
+static GtkWidget *
+stack_pop_1(HildonWindowStack *stack, osso_abook_data *data)
+{
+  GtkWidget *top;
+
+  hildon_window_stack_pop_1(stack);
+  top = hildon_window_stack_peek(stack);
+  gtk_widget_destroy(data->starter_window);
+  data->starter_window = NULL;
+
+  return top;
+}
+
+void
+switch_to_group_subview(osso_abook_data *data, OssoABookGroup *group)
+{
+  GList *toplevels;
+  GList *l;
+  GtkWidget *top;
+  HildonWindowStack *stack;
+
+  g_return_if_fail(data);
+  g_return_if_fail(group && OSSO_ABOOK_IS_GROUP(group));
+
+  stack = hildon_window_stack_get_default();
+  top = hildon_window_stack_peek(stack);
+
+  if (!data->dialog_open && (data->stacked_group != group) && top)
+  {
+    toplevels = gtk_window_list_toplevels();
+
+    for (l = toplevels; l && l->data; l = l->next)
+    {
+      if (l->data == gtk_window_get_transient_for(GTK_WINDOW(top)))
+      {
+        g_list_free(toplevels);
+        return;
+      }
+    }
+
+    g_list_free(toplevels);
+
+    if (!data->starter_window || (top != data->starter_window) ||
+        (top = stack_pop_1(stack, data)))
+    {
+      if (HILDON_STACKABLE_WINDOW(top) != data->window)
+      {
+        hildon_window_stack_pop_1(stack);
+        gtk_widget_destroy(top);
+      }
+    }
+
+    data->stacked_group = NULL;
+    view_group_subview(data, group);
+  }
 }

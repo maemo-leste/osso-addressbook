@@ -321,12 +321,12 @@ get_protocol_groups()
 
   for (protocol = protocols; protocol; protocol = protocol->next)
   {
-    if (osso_abook_caps_from_tp_protocol(protocol->data) &
-        ~OSSO_ABOOK_CAPS_ADDRESSBOOK)
+    if (!(osso_abook_caps_from_tp_protocol(protocol->data) &
+          OSSO_ABOOK_CAPS_ADDRESSBOOK))
     {
       const gchar *vcard_field = tp_protocol_get_vcard_field(protocol->data);
 
-      if (vcard_field && strcmp(vcard_field, EVC_TEL))
+      if (vcard_field && strcmp(vcard_field, "tel"))
       {
         GList *accounts = osso_abook_account_manager_list_by_protocol(
               account_manager, tp_protocol_get_name(protocol->data));
