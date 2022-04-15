@@ -584,7 +584,7 @@ window_realize_cb(GtkWidget *widget, gpointer user_data)
 }
 
 static void
-starter_window_destroy_cb(int unused, osso_abook_data *data)
+starter_window_destroy_cb(GtkWidget *live_search, osso_abook_data *data)
 {
   if (data->starter_window != NULL)
     data->starter_window = NULL;
@@ -613,7 +613,7 @@ action_started_cb(OssoABookTouchContactStarter *starter, osso_abook_data *data)
 }
 
 static void
-contact_deleted_cb(int unused, osso_abook_data *data)
+contact_deleted_cb(GtkWidget *editor, osso_abook_data *data)
 {
   if (data->starter_window)
   {
@@ -623,11 +623,12 @@ contact_deleted_cb(int unused, osso_abook_data *data)
 }
 
 static void
-editor_started_cb(int unused, gpointer instance, gpointer data)
+editor_started_cb(GtkWidget *contact_starter, GtkWidget *editor,
+                  gpointer data)
 {
-  g_signal_connect_after(instance, "contact-saved",
+  g_signal_connect_after(editor, "contact-saved",
                          G_CALLBACK(contact_saved_cb), data);
-  g_signal_connect(instance, "contact-deleted",
+  g_signal_connect(editor, "contact-deleted",
                    G_CALLBACK(contact_deleted_cb), data);
 }
 
@@ -1078,9 +1079,10 @@ row_tapped_cb(GtkTreeView *tree_view, GtkTreePath *treepath,
 }
 
 
-static int
-live_search_scroll(live_search_data *data)
+static gboolean
+live_search_scroll(gpointer user_data)
 {
+  live_search_data *data = user_data;
   GtkTreeView *tv;
   GtkTreePath *treepath;
 
@@ -1101,11 +1103,11 @@ live_search_scroll(live_search_data *data)
     }
   }
 
-  return 0;
+  return FALSE;
 }
 
 static gulong
-live_search_show_cb(int unused, live_search_data *data)
+live_search_show_cb(GtkWidget *live_search, live_search_data *data)
 {
   if (data->row_ref)
   {
@@ -1120,10 +1122,10 @@ live_search_show_cb(int unused, live_search_data *data)
 }
 
 static void
-live_search_hide_cb(int unused, live_search_data *data)
+live_search_hide_cb(GtkWidget *live_search, live_search_data *data)
 {
   if (!data->idle_scroll_id)
-    data->idle_scroll_id = g_idle_add((GSourceFunc)live_search_scroll, data);
+    data->idle_scroll_id = g_idle_add(live_search_scroll, data);
 }
 
 GtkWidget *

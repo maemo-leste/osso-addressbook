@@ -23,6 +23,7 @@ PKG_CHECK_MODULES(
 	libosso-abook-1.0
 	rtcom-eventlogger
 	rtcom-eventlogger-ui
+	rtcom-accounts-ui-client
 	glib-2.0
 	gobject-2.0
 	hildon-1

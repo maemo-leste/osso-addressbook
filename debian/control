@@ -7,7 +7,8 @@ Build-Depends:
  libosso-abook-dev,
  maemo-launcher-dev,
  osso-af-settings,
- librtcom-eventlogger-ui-dev
+ librtcom-eventlogger-ui-dev,
+ librtcom-accounts-ui-client-dev
 Maintainer: Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
 
 Package: osso-addressbook

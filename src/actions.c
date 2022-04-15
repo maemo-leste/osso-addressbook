@@ -114,6 +114,7 @@ gboolean
 contact_saved_cb(GtkWidget *editor, const char *uid, osso_abook_data *data)
 {
   merge(data, uid);
+
   return TRUE;
 }
 
