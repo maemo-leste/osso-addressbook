@@ -1,3 +1,10 @@
+osso-addressbook (0.2) unstable; urgency=low
+
+  * OssoABookRecentView: implement recent_row_activated_cb
+
+ -- Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>  Fri, 23 Sep 2022 07:50:33 +0300
+
+
 osso-addressbook (0.1) unstable; urgency=low
 
   * WIP
