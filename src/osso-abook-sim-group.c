@@ -639,7 +639,7 @@ contacts_added_cb(OssoABookRoster *roster, OssoABookContact **contacts,
 {
   OssoABookSimGroup *sim_group = OSSO_ABOOK_SIM_GROUP(user_data);
   OssoABookSimGroupPrivate *priv = OSSO_ABOOK_SIM_GROUP_PRIVATE(sim_group);
-  const char *uid;
+  const char *uid = osso_abook_roster_get_book_uri(roster);
 
   g_return_if_fail(uid != NULL);
 
@@ -808,7 +808,9 @@ osso_abook_sim_group_get_imsi(OssoABookSimGroup *sim_group)
 
   priv = OSSO_ABOOK_SIM_GROUP_PRIVATE(sim_group);
 
-  g_return_val_if_fail(priv->capabilities, NULL);
+  capabilities = priv->capabilities;
+
+  g_return_val_if_fail(capabilities, NULL);
 
   return capabilities->imsi;
 }

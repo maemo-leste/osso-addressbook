@@ -216,30 +216,6 @@ recent_hide_cb(GtkWidget *widget, gpointer user_data)
   hildon_live_search_widget_unhook(HILDON_LIVE_SEARCH(priv->live_search));
 }
 
-static const char *
-get_vcard_field_from_uri(const gchar *uri)
-{
-  if (g_str_has_prefix(uri, "mailto:"))
-    return "email";
-
-  if (g_str_has_prefix(uri, "xmpp:"))
-    return "x-jabber";
-
-  if (g_str_has_prefix(uri, "sipto:") || g_str_has_prefix(uri, "sip:"))
-    return "x-sip";
-
-  if (g_str_has_prefix(uri, "callto:") ||
-      g_str_has_prefix(uri, "tel:") ||
-      g_str_has_prefix(uri, "sms:"))
-  {
-    return "tel";
-  }
-
-  g_warning("%s: Unsupported URI: %s", __func__, uri);
-
-  return NULL;
-}
-
 static void
 show_info(OssoABookRecentView *self, const gchar *text)
 {
@@ -522,15 +498,14 @@ void
 osso_abook_recent_view_remove_live_search(OssoABookRecentView *self)
 {
   OssoABookRecentViewPrivate *priv;
-  HildonWindow *window;
 
   g_return_if_fail(OSSO_ABOOK_IS_RECENT_VIEW(self));
 
   priv = OSSO_ABOOK_RECENT_VIEW_PRIVATE(self);
 
-  g_return_if_fail(HILDON_IS_WINDOW (priv->window));
+  g_return_if_fail(HILDON_IS_WINDOW(priv->window));
 
-  hildon_window_remove_toolbar(window, GTK_TOOLBAR(priv->live_search));
+  hildon_window_remove_toolbar(priv->window, GTK_TOOLBAR(priv->live_search));
 
   /* FIXME - Umm... what? */
   priv->window = NULL;

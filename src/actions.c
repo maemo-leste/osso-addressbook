@@ -47,6 +47,27 @@
 #include "menu.h"
 #include "sim.h"
 
+static void contact_starter_edit_cb(GtkWidget *button, osso_abook_data *data);
+static void contact_send_card_cb(GtkWidget *button, osso_abook_data *data);
+static void contact_send_detail_cb(GtkWidget *button, osso_abook_data *data);
+static void contact_merge_cb(GtkWidget *button, osso_abook_data *data);
+static void contact_starter_delete_cb(GtkWidget *button, osso_abook_data *data);
+static void contact_create_shortcut_cb(GtkWidget *button, osso_abook_data *data);
+static void contact_request_authorization_cb(GtkWidget *button,
+                                             osso_abook_data *data);
+static void contact_communication_history_cb(GtkWidget *button,
+                                             osso_abook_data *data);
+static void import_selected_contact(GtkWidget *button, osso_abook_data *data);
+
+static void contact_new_cb(GtkWidget *button, osso_abook_data *data);
+static void view_contacts_remove_cb(GtkWidget *button, osso_abook_data *data);
+static void import_cb(GtkWidget *button, osso_abook_data *data);
+static void export_cb(GtkWidget *button, osso_abook_data *data);
+static void view_mecard_cb(GtkWidget *button, osso_abook_data *data);
+static void view_groups_cb(GtkWidget *button, osso_abook_data *data);
+static void view_settings_cb(GtkWidget *button, osso_abook_data *data);
+static void im_launch_account_cpa_cb(GtkWidget *button, osso_abook_data *data);
+
 OssoABookMenuEntry sim_bt_menu_actions[BT_MENU_COUNT] =
 {
   { "addr_me_copy_to_contacts", 0, 0,

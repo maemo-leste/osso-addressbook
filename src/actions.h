@@ -38,51 +38,11 @@ contact_saved_cb(GtkWidget *editor, const char *uid, osso_abook_data *data);
 #define CONTACT_MENU_COUNT 8
 extern OssoABookMenuEntry contact_menu_actions[CONTACT_MENU_COUNT];
 
-static void
-contact_starter_edit_cb(GtkWidget *button, osso_abook_data *data);
-static void
-contact_send_card_cb(GtkWidget *button, osso_abook_data *data);
-static void
-contact_send_detail_cb(GtkWidget *button, osso_abook_data *data);
-static void
-contact_merge_cb(GtkWidget *button, osso_abook_data *data);
-static void
-contact_starter_delete_cb(GtkWidget *button, osso_abook_data *data);
-static void
-contact_create_shortcut_cb(GtkWidget *button, osso_abook_data *data);
-static void
-contact_request_authorization_cb(GtkWidget *button, osso_abook_data *data);
-static void
-contact_communication_history_cb(GtkWidget *button, osso_abook_data *data);
-
-
 #define BT_MENU_COUNT 4
 extern OssoABookMenuEntry sim_bt_menu_actions[BT_MENU_COUNT];
 
-static void
-import_selected_contact(GtkWidget *button, osso_abook_data *data);
-
 #define MAIN_MENU_COUNT 7
 extern OssoABookMenuEntry main_menu_actions[MAIN_MENU_COUNT];
-
-static void
-contact_new_cb(GtkWidget *button, osso_abook_data *data);
-
-static void
-view_contacts_remove_cb(GtkWidget *button, osso_abook_data *data);
-static void
-import_cb(GtkWidget *button, osso_abook_data *data);
-static void
-export_cb(GtkWidget *button, osso_abook_data *data);
-static void
-view_mecard_cb(GtkWidget *button, osso_abook_data *data);
-static void
-view_groups_cb(GtkWidget *button, osso_abook_data *data);
-static void
-view_settings_cb(GtkWidget *button, osso_abook_data *data);
-
-static void
-im_launch_account_cpa_cb(GtkWidget *button, osso_abook_data *data);
 
 void
 switch_to_group_subview(osso_abook_data *data, OssoABookGroup *group);
