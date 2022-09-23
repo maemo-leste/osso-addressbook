@@ -25,14 +25,19 @@
 #include <rtcom-eventlogger/eventlogger.h>
 #include <rtcom-eventlogger-ui/rtcom-log-model.h>
 #include <rtcom-eventlogger-ui/rtcom-log-view.h>
+#include <rtcom-eventlogger-ui/rtcom-log-columns.h>
 
+#include <libosso-abook/osso-abook-account-manager.h>
 #include <libosso-abook/osso-abook-contact.h>
 #include <libosso-abook/osso-abook-aggregator.h>
 #include <libosso-abook/osso-abook-util.h>
+#include <libosso-abook/osso-abook-temporary-contact-dialog.h>
 
 #include <libintl.h>
 
 #include "osso-abook-recent-view.h"
+
+#include "app.h"
 
 struct _OssoABookRecentViewPrivate
 {
@@ -211,11 +216,176 @@ recent_hide_cb(GtkWidget *widget, gpointer user_data)
   hildon_live_search_widget_unhook(HILDON_LIVE_SEARCH(priv->live_search));
 }
 
+static const char *
+get_vcard_field_from_uri(const gchar *uri)
+{
+  if (g_str_has_prefix(uri, "mailto:"))
+    return "email";
+
+  if (g_str_has_prefix(uri, "xmpp:"))
+    return "x-jabber";
+
+  if (g_str_has_prefix(uri, "sipto:") || g_str_has_prefix(uri, "sip:"))
+    return "x-sip";
+
+  if (g_str_has_prefix(uri, "callto:") ||
+      g_str_has_prefix(uri, "tel:") ||
+      g_str_has_prefix(uri, "sms:"))
+  {
+    return "tel";
+  }
+
+  g_warning("%s: Unsupported URI: %s", __func__, uri);
+
+  return NULL;
+}
+
+static void
+show_info(OssoABookRecentView *self, const gchar *text)
+{
+  hildon_banner_show_information(gtk_widget_get_toplevel(GTK_WIDGET(self)),
+                                 NULL, text);
+}
+
 static void
 recent_row_activated_cb(GtkTreeView *tree_view, GtkTreePath *path,
                         GtkTreeViewColumn *column, gpointer user_data)
 {
-  g_assert(0);
+  OssoABookRecentView *self;
+  OssoABookRecentViewPrivate *priv;
+  GtkTreeModel *model;
+  TpAccount *account;
+  const char *vcard_field = NULL;
+  OssoABookContact *contact = NULL;
+  GtkTreeIter iter;
+  char *event_id;
+  char *remote_account_name;
+  char *local_account_name;
+  char *uid;
+
+  g_return_if_fail(user_data);
+
+  self = user_data;
+  priv = OSSO_ABOOK_RECENT_VIEW_PRIVATE(self);
+
+  model = gtk_tree_view_get_model(tree_view);
+  gtk_tree_model_get_iter(model, &iter, path);
+  gtk_tree_model_get(model, &iter,
+                     RTCOM_LOG_VIEW_COL_ECONTACT_UID, &uid,
+                     RTCOM_LOG_VIEW_COL_LOCAL_ACCOUNT, &local_account_name,
+                     RTCOM_LOG_VIEW_COL_REMOTE_ACCOUNT, &remote_account_name,
+                     RTCOM_LOG_VIEW_COL_EVENT_ID, &event_id,
+                     -1);
+
+  if (IS_EMPTY(remote_account_name))
+  {
+    show_info(self, dgettext(0, "addr_ib_unknown_number"));
+    return;
+  }
+
+  account = osso_abook_account_manager_lookup_by_name(NULL, local_account_name);
+
+  if (account)
+  {
+    TpProtocol *protocol = osso_abook_account_manager_get_protocol_object(
+          NULL, tp_account_get_protocol_name(account));
+
+    if (protocol)
+      vcard_field = tp_protocol_get_vcard_field(protocol);
+  }
+
+  if (IS_EMPTY(vcard_field))
+    vcard_field = _get_vcard_field_from_uri(remote_account_name);
+
+  if (uid)
+  {
+    GList *contacts = osso_abook_aggregator_lookup(
+          OSSO_ABOOK_AGGREGATOR(priv->aggregator), uid);
+
+    if (contacts)
+      contact = contacts->data;
+
+    g_list_free(contacts);
+  }
+
+  if (!contact)
+  {
+    EBookQuery *query;
+    GList *contacts;
+    GList *c;
+    GList *roster_contacts;
+    GList *rc;
+
+    if (IS_EMPTY(vcard_field))
+    {
+      show_info(self, dgettext(NULL, "addr_ib_cannot_show_contact"));
+      return;
+    }
+
+    query = e_book_query_vcard_field_test(vcard_field, E_BOOK_QUERY_IS,
+                                          remote_account_name);
+    contacts = osso_abook_aggregator_find_contacts(
+          OSSO_ABOOK_AGGREGATOR(priv->aggregator), query);
+
+    for (c = contacts; c; c = c->next)
+    {
+      if (contact || !c->data)
+        break;
+
+      roster_contacts = osso_abook_contact_get_roster_contacts(c->data);
+
+      for (rc = roster_contacts; rc; rc = rc->next)
+      {
+        if (!rc->data)
+          continue;
+
+        if (g_str_equal(local_account_name,
+                        tp_account_get_path_suffix(
+                          osso_abook_contact_get_account(rc->data))))
+        {
+          contact = c->data;
+          break;
+        }
+      }
+
+      g_list_free(roster_contacts);
+    }
+
+    if (!contact && contacts)
+      contact = contacts->data;
+
+    e_book_query_unref(query);
+    g_list_free(contacts);
+  }
+
+
+  if (!contact && IS_EMPTY(vcard_field))
+  {
+    show_info(self, dgettext(NULL, "addr_ib_cannot_show_contact"));
+    return;
+  }
+
+  if (contact)
+    g_signal_emit(self, signals[SHOW_CONTACT], 0, contact);
+  else
+  {
+    EVCardAttribute *attr = e_vcard_attribute_new(NULL, vcard_field);
+    EBook *book;
+    GtkWidget *dialog;
+    GtkWindow *parent;
+
+    e_vcard_attribute_add_value(attr, remote_account_name);
+    book = osso_abook_roster_get_book(OSSO_ABOOK_ROSTER(priv->aggregator));
+    parent = GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(self)));
+    dialog = osso_abook_temporary_contact_dialog_new(
+          parent, book, attr, account);
+
+    g_signal_connect(dialog, "response", (GCallback)&gtk_widget_destroy, NULL);
+    gtk_widget_show(dialog);
+    e_vcard_attribute_free(attr);
+  }
+
+  osso_abook_recent_view_hide_live_search(self);
 }
 
 static void
