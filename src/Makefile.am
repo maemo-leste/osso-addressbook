@@ -7,7 +7,7 @@ osso_addressbook_CFLAGS = \
 
 osso_addressbook_LDFLAGS = \
 			-Wl,--as-needed $(OSSO_ABOOK_LIBS) \
-			$(MAEMO_LAUNCHER_LDFLAGS)
+			$(MAEMO_LAUNCHER_LIBS)
 
 osso_addressbook_SOURCES = \
 			hw.c \
