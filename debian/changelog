@@ -1,3 +1,9 @@
+osso-addressbook (0.3) unstable; urgency=low
+
+  * Chimaera runtime fix
+
+ -- Merlijn Wajer <merlijn@wizzup.org>  Sun, 11 Dec 2022 22:31:34 +0100
+
 osso-addressbook (0.2) unstable; urgency=low
 
   * OssoABookRecentView: implement recent_row_activated_cb
