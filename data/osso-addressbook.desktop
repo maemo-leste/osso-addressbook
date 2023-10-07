@@ -18,33 +18,40 @@ X-Text-Domain=osso-addressbook
 Method=add_account
 Name=addr_me_cs_addtocontacts
 TranslationDomain=osso-addressbook
+Modifier=Edit
 
 [X-Osso-URI-Action Handler xmpp]
 Method=add_account
 Name=addr_me_cs_addtocontacts
 TranslationDomain=osso-addressbook
+Modifier=Edit
 
 [X-Osso-URI-Action Handler sipto]
 Method=add_account
 Name=addr_me_cs_addtocontacts
 TranslationDomain=osso-addressbook
+Modifier=Edit
 
 [X-Osso-URI-Action Handler sip]
 Method=add_account
 Name=addr_me_cs_addtocontacts
 TranslationDomain=osso-addressbook
+Modifier=Edit
 
 [X-Osso-URI-Action Handler tel]
 Method=add_account
 Name=addr_me_cs_addtocontacts
 TranslationDomain=osso-addressbook
+Modifier=Edit
 
 [X-Osso-URI-Action Handler sms]
 Method=add_account
 Name=addr_me_cs_addtocontacts
 TranslationDomain=osso-addressbook
+Modifier=Edit
 
 [X-Osso-URI-Action Handler callto]
 Method=add_account
 Name=addr_me_cs_addtocontacts
 TranslationDomain=osso-addressbook
+Modifier=Edit

@@ -4,7 +4,7 @@ Priority: optional
 Build-Depends:
  debhelper-compat (= 10),
  libmodest-dbus-client-dev (>= 3.2.4),
- libosso-abook-dev,
+ libosso-abook-dev (>= 1:4.3.0),
  maemo-launcher-dev,
  osso-af-settings,
  librtcom-eventlogger-ui-dev,
