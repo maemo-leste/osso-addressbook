@@ -1,3 +1,9 @@
+osso-addressbook (0.3.1) unstable; urgency=low
+
+  * osso-addressbook.desktop: Add actions modifier
+
+ -- Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>  Sat, 07 Oct 2023 11:30:17 +0300
+
 osso-addressbook (0.3) unstable; urgency=low
 
   * Chimaera runtime fix
