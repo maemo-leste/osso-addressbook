@@ -234,10 +234,11 @@ recent_row_activated_cb(GtkTreeView *tree_view, GtkTreePath *path,
   const char *vcard_field = NULL;
   OssoABookContact *contact = NULL;
   GtkTreeIter iter;
-  char *event_id;
+  int event_id;
   char *remote_account_name;
   char *local_account_name;
   char *uid;
+  GHashTable *headers = NULL;
 
   g_return_if_fail(user_data);
 
@@ -273,6 +274,14 @@ recent_row_activated_cb(GtkTreeView *tree_view, GtkTreePath *path,
   if (IS_EMPTY(vcard_field))
     vcard_field = _get_vcard_field_from_uri(remote_account_name);
 
+  if (IS_EMPTY(vcard_field))
+  {
+    headers = rtcom_el_fetch_event_headers(priv->el, event_id);
+
+    if (headers)
+      vcard_field = g_hash_table_lookup(headers, "vcard-field");
+  }
+
   if (uid)
   {
     GList *contacts = osso_abook_aggregator_lookup(
@@ -295,7 +304,7 @@ recent_row_activated_cb(GtkTreeView *tree_view, GtkTreePath *path,
     if (IS_EMPTY(vcard_field))
     {
       show_info(self, dgettext(NULL, "addr_ib_cannot_show_contact"));
-      return;
+      goto destroy_headers;
     }
 
     query = e_book_query_vcard_field_test(vcard_field, E_BOOK_QUERY_IS,
@@ -338,7 +347,7 @@ recent_row_activated_cb(GtkTreeView *tree_view, GtkTreePath *path,
   if (!contact && IS_EMPTY(vcard_field))
   {
     show_info(self, dgettext(NULL, "addr_ib_cannot_show_contact"));
-    return;
+    goto destroy_headers;
   }
 
   if (contact)
@@ -362,6 +371,10 @@ recent_row_activated_cb(GtkTreeView *tree_view, GtkTreePath *path,
   }
 
   osso_abook_recent_view_hide_live_search(self);
+
+destroy_headers:
+  if (headers)
+    g_hash_table_destroy(headers);
 }
 
 static void
