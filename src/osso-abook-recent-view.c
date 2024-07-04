@@ -264,8 +264,8 @@ recent_row_activated_cb(GtkTreeView *tree_view, GtkTreePath *path,
 
   if (account)
   {
-    TpProtocol *protocol = osso_abook_account_manager_get_protocol_object(
-          NULL, tp_account_get_protocol_name(account));
+    TpProtocol *protocol =
+      osso_abook_account_manager_get_account_protocol_object(NULL, account);
 
     if (protocol)
       vcard_field = tp_protocol_get_vcard_field(protocol);

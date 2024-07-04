@@ -121,10 +121,10 @@ add_service_groups(GtkTable *table, osso_abook_data *data, int *attach)
 
       if (account)
       {
-        TpProtocol *protocol = osso_abook_account_manager_get_protocol_object(
-            NULL, tp_account_get_protocol_name(account));
-        gint count = GPOINTER_TO_INT(g_hash_table_lookup(hash_table,
-                                                         protocol));
+        TpProtocol *protocol =
+          osso_abook_account_manager_get_account_protocol_object(NULL, account);
+        gint count = GPOINTER_TO_INT(g_hash_table_lookup(hash_table, protocol));
+
         g_hash_table_replace(hash_table, protocol,
                              GINT_TO_POINTER(count + 1));
       }
@@ -144,8 +144,7 @@ add_service_groups(GtkTable *table, osso_abook_data *data, int *attach)
       if (account)
       {
         TpProtocol *protocol =
-          osso_abook_account_manager_get_protocol_object(
-            NULL, tp_account_get_protocol_name(account));
+          osso_abook_account_manager_get_account_protocol_object(NULL, account);
         const char *id = dgettext(NULL, "addr_va_groups_imgrp");
         gchar *title = g_strdup_printf(id,
                                        tp_account_get_display_name(account));
