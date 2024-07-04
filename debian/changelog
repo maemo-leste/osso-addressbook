@@ -1,3 +1,9 @@
+osso-addressbook (0.3.3) unstable; urgency=low
+
+  * drop osso_abook_account_manager_get_protocol_object() usage
+
+ -- Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>  Mon, 09 Oct 2023 18:59:32 +0300
+
 osso-addressbook (0.3.2) unstable; urgency=low
 
   * osso-abook-recent-view: use rtcomel event header "vcard-field"
