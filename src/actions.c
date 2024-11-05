@@ -321,33 +321,29 @@ create_communication_history_query(OssoABookContact *contact, RTComEl *rtcomel)
   if (osso_abook_is_temporary_uid(uid))
   {
     GList *roster_contacts = osso_abook_contact_get_roster_contacts(contact);
+    OssoABookContact *rc;
 
-    if (roster_contacts)
+    if (roster_contacts && (rc = roster_contacts->data))
     {
-      OssoABookContact *rc = roster_contacts->data;
+      TpAccount *account = osso_abook_contact_get_account(rc);
+      const char *bound_name = osso_abook_contact_get_bound_name(rc);
 
-      g_list_free(roster_contacts);
-
-      if (rc)
-      {
-        TpAccount *account = osso_abook_contact_get_account(rc);
-        const char *bound_name =
-          osso_abook_contact_get_bound_name(rc);
-
-        prepared = rtcom_el_query_prepare(
+      prepared = rtcom_el_query_prepare(
             query,
             "local-uid", tp_account_get_path_suffix(account), NULL,
             "remote-uid", bound_name, NULL,
             NULL);
-      }
     }
+    else
+      g_warn_if_reached();
 
-    g_warn_if_reached();
+    g_list_free(roster_contacts);
   }
   else
   {
-    prepared = rtcom_el_query_prepare(
-        query, "remote-ebook-uid", uid, NULL, NULL);
+    prepared = rtcom_el_query_prepare(query,
+                                      "remote-ebook-uid", uid, NULL,
+                                      NULL);
   }
 
   if (!prepared)
