@@ -1,3 +1,9 @@
+osso-addressbook (0.3.4) unstable; urgency=low
+
+  * fix false warning
+
+ -- Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>  Tue, 05 Nov 2024 06:27:54 +0200
+
 osso-addressbook (0.3.3) unstable; urgency=low
 
   * drop osso_abook_account_manager_get_protocol_object() usage
